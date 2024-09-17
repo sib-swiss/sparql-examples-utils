@@ -29,6 +29,7 @@
 		<junit.version>5.9.3</junit.version>
 		<project.tests.exclude>SlowTest</project.tests.exclude>
 		<native.maven.plugin.version>0.10.3</native.maven.plugin.version>
+		<picocli.version>4.7.6</picocli.version>
 	</properties>
 	<profiles>
 		<profile>
@@ -153,7 +154,13 @@
 		<dependency>
 			<groupId>info.picocli</groupId>
 			<artifactId>picocli</artifactId>
-			<version>4.7.6</version>
+			<version>${picocli.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/info.picocli/picocli-codegen -->
+		<dependency>
+			<groupId>info.picocli</groupId>
+			<artifactId>picocli-codegen</artifactId>
+			<version>${picocli.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jsoup</groupId>
@@ -352,6 +359,18 @@
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.1</version>
+				<configuration>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>info.picocli</groupId>
+							<artifactId>picocli-codegen</artifactId>
+							<version>${picocli.version}</version>
+						</path>
+					</annotationProcessorPaths>
+					<compilerArgs>
+						<arg>-Aproject=${project.groupId}/${project.artifactId}</arg>
+					</compilerArgs>
+				</configuration>
 			</plugin>
 			<plugin>
 				<artifactId>maven-surefire-plugin</artifactId>
