@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 
 import swiss.sib.rdf.sparql.examples.vocabularies.SIB;
 import swiss.sib.rdf.sparql.examples.vocabularies.SchemaDotOrg;
+import swiss.sib.rdf.sparql.examples.vocabularies.Scholia;
 
 public class SparqlInRdfToMd {
 	private static final Logger log = LoggerFactory.getLogger(SparqlInRdfToMd.class);
@@ -50,11 +51,19 @@ public class SparqlInRdfToMd {
 					.map(v -> " * " + v).forEach(rq::add);
 
 			rq.add("");
+			String varEx = streamOf(ex, queryId, Scholia.VARIABLE_EXAMPLE, null).map(Statement::getObject)
+					.map(Value::stringValue).findFirst().orElse("Q42");
+			Iterable<Statement> statements = ex.getStatements(queryId, Scholia.VARIABLE, null);
+			for (Statement statement : statements) {
+				rq.add("* variable: `" + statement.getObject().stringValue() + "`, e.g. `" + varEx + "`.");
+			}
+			rq.add("");
 			rq.add("```sparql");
 			Stream.of(SHACL.ASK, SHACL.SELECT, SHACL.CONSTRUCT, SIB.DESCRIBE)
 					.flatMap(qt -> streamOf(ex, queryId, qt, null)).map(Statement::getObject).map(o -> o.stringValue())
 					.forEach(q -> rq.add(q));
 			rq.add("```");
+
 			Iterator<Statement> iterator = streamOf(ex, queryId, DCTERMS.IS_PART_OF, null).iterator();
 			if (iterator.hasNext()) {
 				rq.add("## Query found at ");
