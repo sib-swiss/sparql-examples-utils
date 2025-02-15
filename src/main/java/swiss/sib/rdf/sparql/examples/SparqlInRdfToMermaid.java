@@ -14,12 +14,15 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.model.vocabulary.SHACL;
 import org.eclipse.rdf4j.query.algebra.TupleExpr;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
@@ -31,6 +34,7 @@ import swiss.sib.rdf.sparql.examples.mermaid.NameVariablesAndConstants;
 import swiss.sib.rdf.sparql.examples.mermaid.Render;
 import swiss.sib.rdf.sparql.examples.vocabularies.SIB;
 import swiss.sib.rdf.sparql.examples.vocabularies.SchemaDotOrg;
+import swiss.sib.rdf.sparql.examples.vocabularies.Scholia;
 
 public class SparqlInRdfToMermaid {
 
@@ -47,7 +51,7 @@ public class SparqlInRdfToMermaid {
 
 		streamOf(ex, null, RDF.TYPE, SHACL.SPARQL_EXECUTABLE).map(Statement::getSubject).distinct().forEach(s -> {
 			Stream.of(SHACL.ASK, SHACL.SELECT, SHACL.CONSTRUCT, SIB.DESCRIBE).flatMap(qt -> streamOf(ex, s, qt, null))
-					.forEach(q -> draw(q, ex, rq));
+					.forEach(q -> draw(s, q, ex, rq));
 		});
 		return rq.stream().collect(Collectors.joining("\n"));
 	}
@@ -55,8 +59,18 @@ public class SparqlInRdfToMermaid {
 	/**
 	 * Draw mermaid graph
 	 **/
-	public static void draw(Statement queryId, Model ex, List<String> rq) {
+	public static void draw(Resource s, Statement queryId, Model ex, List<String> rq) {
 		String query = queryId.getObject().stringValue();
+
+		// variable support
+		// get an example)
+		String varEx = streamOf(ex, queryId.getSubject(), Scholia.VARIABLE_EXAMPLE, null).map(Statement::getObject)
+				.map(Value::stringValue).findFirst().orElse("Q42");
+		// update the query
+		Iterable<Statement> statements = ex.getStatements(s, Scholia.VARIABLE, null);
+		for (Statement statement : statements) {
+			query = query.replace(statement.getObject().stringValue(), varEx);
+		}
 
 		String base = streamOf(ex, queryId.getSubject(), SchemaDotOrg.TARGET, null).map(Statement::getObject)
 				.map(Value::stringValue).findFirst().orElse("https://example.org/");
