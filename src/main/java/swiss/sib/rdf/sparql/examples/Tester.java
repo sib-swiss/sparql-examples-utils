@@ -50,8 +50,13 @@ public class Tester implements Callable<Integer> {
 	@Option(names = { "--also-run-slow-tests" })
 	private boolean alsoRunSlowTests;
 
+	@Option(names = { "--also-run-python-tests" })
+	private boolean alsoRunPythonTests;
+	
 	@Option(names = { "--status-markdown" })
 	private File statusMarkdown;
+
+	
 
 	@Override
 	public Integer call() throws Exception {
@@ -96,6 +101,11 @@ public class Tester implements Callable<Integer> {
 			standardOptions = new ArrayList<>(standardOptions);
 			standardOptions.add("--exclude-tag");
 			standardOptions.add("SlowTest");
+		}
+		if (!alsoRunPythonTests) {
+			standardOptions = new ArrayList<>(standardOptions);
+			standardOptions.add("--exclude-tag");
+			standardOptions.add("PythonTest");
 		}
 		ConsoleLauncherExecutionResult execute = ConsoleLauncher.execute(System.out, System.err,
 				(String[]) standardOptions.toArray(new String[0]));
