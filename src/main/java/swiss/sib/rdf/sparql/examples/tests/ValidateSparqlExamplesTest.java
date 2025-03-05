@@ -55,6 +55,13 @@ public class ValidateSparqlExamplesTest {
 		Function<Path, Executable> tester = p -> () -> CreateTestWithBigDataMethods.testQueryValid(p);
 		return testAll(tester);
 	}
+	
+	@Tag("PythonTest")
+	@TestFactory
+	public Stream<DynamicTest> testAllWithRdfLib() throws URISyntaxException, IOException {
+		Function<Path, Executable> tester = (p) -> () -> CreateTestWithPythonRdfLibMethods.testQueryValid(p);
+		return testAll(tester);
+	}
 
 	@Tag("SlowTest")
 	@TestFactory
