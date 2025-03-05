@@ -53,8 +53,13 @@ public class Tester implements Callable<Integer> {
 	@Option(names = { "--also-run-void-check" })
 	private boolean alsoRunVoidCheck;
 
+	@Option(names = { "--also-run-python-tests" })
+	private boolean alsoRunPythonTests;
+	
 	@Option(names = { "--status-markdown" })
 	private File statusMarkdown;
+
+	
 
 	@Override
 	public Integer call() throws Exception {
@@ -65,7 +70,7 @@ public class Tester implements Callable<Integer> {
 			commandLine.printVersionHelp(System.out);
 		} else {
 			try {
-			return test();
+				return test();
 			} catch (NeedToStopException e) {
 				System.err.println(e.getMessage());
 				return e.getFailure().exitCode();
@@ -101,14 +106,13 @@ public class Tester implements Callable<Integer> {
 		List<String> standardOptions = List.of("--fail-if-no-tests", "--include-engine", "junit-jupiter",
 				"--select-package", ValidateSparqlExamplesTest.class.getPackageName());
 		if (!alsoRunSlowTests) {
-			standardOptions = new ArrayList<>(standardOptions);
-			standardOptions.add("--exclude-tag");
-			standardOptions.add("SlowTest");
+			standardOptions = exclude(standardOptions, "SlowTest");
 		}
 		if (!alsoRunVoidCheck) {
-			standardOptions = new ArrayList<>(standardOptions);
-			standardOptions.add("--exclude-tag");
-			standardOptions.add("VoIDTest");
+			standardOptions = exclude(standardOptions, "VoIDTest");
+		}
+		if (!alsoRunPythonTests) {
+			standardOptions = exclude(standardOptions, "PythonTest");
 		}
 		ConsoleLauncherExecutionResult execute = ConsoleLauncher.execute(System.out, System.err,
 				(String[]) standardOptions.toArray(new String[0]));
@@ -121,6 +125,13 @@ public class Tester implements Callable<Integer> {
 		}
 		return execute.getExitCode();
 
+	}
+
+	private List<String> exclude(List<String> standardOptions, String tag) {
+		List<String> copyOfOptions= new ArrayList<>(standardOptions);
+		copyOfOptions.add("--exclude-tag");
+		copyOfOptions.add(tag);
+		return copyOfOptions;
 	}
 
 	private static class TestExecutionAsSummaryMarkdownWriter {
