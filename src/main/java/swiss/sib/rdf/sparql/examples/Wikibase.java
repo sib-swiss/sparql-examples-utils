@@ -115,17 +115,21 @@ public class Wikibase implements Callable<Integer> {
 		} else {
 			outputSearchResultDir = new File(outputDirectory.toFile(), "searchResults");
 			if (!outputSearchResultDir.exists() && !outputSearchResultDir.mkdirs()) {
-				Failure.CANT_READ_INPUT_DIRECTORY.exit(null);
+				return Failure.CANT_READ_INPUT_DIRECTORY.exitCode();
 			}
 			outputHtmlDir = new File(outputDirectory.toFile(), "html");
 			if (!outputHtmlDir.exists() && !outputHtmlDir.mkdirs()) {
-				Failure.CANT_READ_INPUT_DIRECTORY.exit(null);
+				return Failure.CANT_READ_INPUT_DIRECTORY.exitCode();
 			}
 			outputJsonDir = new File(outputDirectory.toFile(), "json");
 			if (!outputJsonDir.exists() && !outputJsonDir.mkdirs()) {
-				Failure.CANT_READ_INPUT_DIRECTORY.exit(null);
+				return Failure.CANT_READ_INPUT_DIRECTORY.exitCode();
 			}
-			fetchHtml();
+			try {
+				fetchHtml();
+			} catch (NeedToStopException e) {
+				return e.getFailure().exitCode();
+			}
 		}
 		return 0;
 	}
@@ -169,7 +173,7 @@ public class Wikibase implements Callable<Integer> {
 					}
 				}
 			} catch (IOException e) {
-				Failure.CONNECTION_TO_WIKIDATA_WIKI_FAIL.exit(e);
+				throw new NeedToStopException(e, Failure.CONNECTION_TO_WIKIDATA_WIKI_FAIL);
 			}
 		}
 	}

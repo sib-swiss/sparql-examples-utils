@@ -61,7 +61,12 @@ public class Tester implements Callable<Integer> {
 		} else if (commandLine.isVersionHelpRequested()) {
 			commandLine.printVersionHelp(System.out);
 		} else {
+			try {
 			return test();
+			} catch (NeedToStopException e) {
+				System.err.println(e.getMessage());
+				return e.getFailure().exitCode();
+			}
 		}
 		return 0;
 	}
@@ -74,18 +79,17 @@ public class Tester implements Callable<Integer> {
 			try (Stream<Path> list = Files.list(inputDirectory)) {
 				return test(list);
 			} catch (IOException e) {
-				Failure.CANT_READ_INPUT_DIRECTORY.exit(e);
+				throw new NeedToStopException(e, Failure.CANT_READ_INPUT_DIRECTORY);
 			} catch (Exception e) {
-				Failure.JUNIT.exit(e);
+				throw new NeedToStopException(e, Failure.JUNIT);
 			}
 		} else {
 			try (Stream<Path> list = COMMA.splitAsStream(projects).map(inputDirectory::resolve)) {
 				return test(list);
 			} catch (Exception e) {
-				Failure.JUNIT.exit(e);
+				throw new NeedToStopException(e, Failure.JUNIT);
 			}
 		}
-		return Failure.DID_NOTHING.exitCode();
 	}
 
 	private int test(Stream<Path> list) throws Exception {

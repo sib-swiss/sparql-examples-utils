@@ -16,10 +16,6 @@ public enum Failure {
 		return new NeedToStopException(e, this);
 	}
 	
-	void exit(Exception e) throws NeedToStopException{
-		throw new NeedToStopException(e, this);
-	}
-
 	void exit(String queryS, MalformedQueryException e) throws NeedToStopException {
 		throw new NeedToStopException(e, this, queryS + "." + e.getMessage());
 	}

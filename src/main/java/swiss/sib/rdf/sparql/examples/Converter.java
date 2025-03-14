@@ -110,7 +110,7 @@ public class Converter implements Callable<Integer>{
 			try (Stream<Path> list = Files.list(inputDirectory)) {
 				parseAll(list, model, inputDirectory);
 			} catch (IOException e) {
-				Failure.CANT_READ_INPUT_DIRECTORY.exit(e);
+				throw new NeedToStopException(e, Failure.CANT_READ_INPUT_DIRECTORY);
 			}
 		} else {
 			try (Stream<Path> list = COMMA.splitAsStream(projects).map(inputDirectory::resolve)) {
@@ -125,7 +125,7 @@ public class Converter implements Callable<Integer>{
 			try (Stream<Path> list = Files.list(inputDirectory)) {
 				convertProjectsPerSingle(list, extension, converter, converterPerProject);
 			} catch (IOException e) {
-				Failure.CANT_READ_INPUT_DIRECTORY.exit(e);
+				throw new NeedToStopException(e, Failure.CANT_READ_INPUT_DIRECTORY);
 			}
 		} else {
 			try (Stream<Path> list = COMMA.splitAsStream(projects).map(inputDirectory::resolve)) {
@@ -268,9 +268,9 @@ public class Converter implements Callable<Integer>{
 			rdfParser.parse(is);
 		} catch (RDFParseException | RDFHandlerException e) {
 			System.err.println("Failed to parse " + p);
-			Failure.CANT_PARSE_EXAMPLE.exit(e);
+			throw new NeedToStopException(e, Failure.CANT_PARSE_EXAMPLE);
 		} catch (IOException e) {
-			Failure.CANT_READ_EXAMPLE.exit(e);
+			throw new NeedToStopException(e, Failure.CANT_READ_EXAMPLE);
 		}
 		temp.getStatements(null, RDF.TYPE, SHACL.SPARQL_EXECUTABLE).forEach(s -> {
 			addTriplesUsedDuringBuild(temp, p, s.getSubject());

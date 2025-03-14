@@ -242,7 +242,7 @@ public class ImportFromRq implements Callable<Integer> {
 			Rio.write(model, out, RDFFormat.TURTLE);
 
 		} catch (RDFHandlerException | IOException e) {
-			Failure.CANT_WRITE_FIXED_EXAMPLE.exit(e);
+			throw new NeedToStopException(e, Failure.CANT_WRITE_FIXED_EXAMPLE);
 		}
 	}
 }

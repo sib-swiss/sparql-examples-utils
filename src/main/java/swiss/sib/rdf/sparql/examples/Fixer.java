@@ -74,7 +74,11 @@ public class Fixer implements Callable<Integer> {
 		} else if (commandLine.isVersionHelpRequested()) {
 			commandLine.printVersionHelp(System.out);
 		} else {
-			findFilesToFix();
+			try {
+				findFilesToFix();
+			} catch (NeedToStopException e) {
+				return e.getFailure().exitCode();
+			}
 		}
 		return 0;
 	}
@@ -122,12 +126,12 @@ public class Fixer implements Callable<Integer> {
 						}
 					} catch (IOException | RDFParseException e) {
 						log.error("RDF error in " + ttl);
-						Failure.CANT_READ_EXAMPLE.exit(e);
+						Failure.CANT_READ_EXAMPLE.tothrow(e);
 					}
 				});
 			}
 		} catch (IOException e) {
-			Failure.CANT_READ_INPUT_DIRECTORY.exit(e);
+			Failure.CANT_READ_INPUT_DIRECTORY.tothrow(e);
 		}
 	}
 
@@ -156,7 +160,7 @@ public class Fixer implements Callable<Integer> {
 				try {
 					conn.add(p.toFile());
 				} catch (RDFParseException | RepositoryException | IOException e) {
-					Failure.CANT_PARSE_PREFIXES.exit(e);
+					Failure.CANT_PARSE_PREFIXES.tothrow(e);
 				}
 				conn.commit();
 			});
@@ -203,7 +207,7 @@ public class Fixer implements Callable<Integer> {
 			log.debug("Fixed datatypes " + queryIriStr + " in file " + file);
 			model.remove(queryIri, type, null);
 			model.add(queryIri, type, VF.createLiteral(fixedDatatypes.fixed()));
-			writeFixedModel(file, model);
+			writeModel(file, model);
 		}
 		return fixedDatatypes;
 	}
@@ -218,7 +222,7 @@ public class Fixer implements Callable<Integer> {
 			model.remove(queryIri, SIB.BIGDATA_QUERY, null);
 			model.add(queryIri, type, VF.createLiteral(fixBlz.fixed()));
 			model.add(queryIri, SIB.BIGDATA_QUERY, query);
-			writeFixedModel(file, model);
+			writeModel(file, model);
 		}
 		return fixBlz;
 	}
@@ -230,7 +234,7 @@ public class Fixer implements Callable<Integer> {
 			log.debug("Fixed prefixes " + queryIriStr + " in file " + file);
 			model.remove(queryIri, type, null);
 			model.add(queryIri, type, VF.createLiteral(fixedPrefixes.fixed()));
-			writeFixedModel(file, model);
+			writeModel(file, model);
 		}
 		return fixedPrefixes;
 	}
@@ -250,24 +254,25 @@ public class Fixer implements Callable<Integer> {
 				}
 			}
 			if (!present) {
-				writeFixedModel(file, model);
+				writeModel(file, model);
 				return true;
 			}
 		}
 		return false;
 	}
 
-	private static void writeFixedModel(Path file, Model model) {
+	private static void writeModel(Path file, Model model) {
 		try (OutputStream out = Files.newOutputStream(file, StandardOpenOption.TRUNCATE_EXISTING)) {
 			model.getNamespaces().add(SHACL.NS);
 			model.getNamespaces().add(RDF.NS);
 			model.getNamespaces().add(RDFS.NS);
 			model.getNamespaces().add(SchemaDotOrg.NS);
 			model.getNamespaces().add(DCTERMS.NS);
+			model.getNamespaces().add(SIB.NS);
 			Rio.write(model, out, RDFFormat.TURTLE);
 
 		} catch (RDFHandlerException | IOException e) {
-			Failure.CANT_WRITE_FIXED_EXAMPLE.exit(e);
+			Failure.CANT_WRITE_FIXED_EXAMPLE.tothrow(e);
 		}
 	}
 }

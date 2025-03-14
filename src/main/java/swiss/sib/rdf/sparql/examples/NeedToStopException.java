@@ -7,12 +7,12 @@ public class NeedToStopException extends RuntimeException {
 	private static final long serialVersionUID = 1L;
 	private final Failure failure;
 
-	public NeedToStopException(Exception e, Failure failure) {
+	NeedToStopException(Exception e, Failure failure) {
 		super(e);
 		this.failure = failure;
 	}
 
-	public NeedToStopException(MalformedQueryException e, Failure failure2, String message) {
+	NeedToStopException(MalformedQueryException e, Failure failure2, String message) {
 		super(message, e);
 		this.failure = failure2;
 	}
