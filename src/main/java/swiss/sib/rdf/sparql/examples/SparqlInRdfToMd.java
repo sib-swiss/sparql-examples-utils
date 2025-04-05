@@ -118,10 +118,16 @@ public class SparqlInRdfToMd {
 		List<String> rq = new ArrayList<>();
 
 		Counter counter = new Counter();
-		streamOf(ex, null, RDF.TYPE, SHACL.SPARQL_EXECUTABLE).map(Statement::getSubject).distinct().forEach(queryId -> 
-			Stream.of(SHACL.ASK, SHACL.SELECT, SHACL.CONSTRUCT, SIB.DESCRIBE)
+		try {
+			streamOf(ex, null, RDF.TYPE, SHACL.SPARQL_EXECUTABLE).map(Statement::getSubject).distinct().forEach(queryId -> 
+				Stream.of(SHACL.ASK, SHACL.SELECT, SHACL.CONSTRUCT, SIB.DESCRIBE)
 					.flatMap(qt -> streamOf(ex, queryId, qt, null)).forEach(q -> countInEachQuery(ex, counter, queryId, q))
-		);
+			);
+		} catch (MalformedQueryException exception) {
+			log.debug("Cannot parse the SPARQL query: ", exception.getMessage());
+			// continue without statistics
+			return rq;
+		}
 		rq.add("# Statistics for SPARQL algebra features in use");
 		rq.add("");
 		rq.add("""
