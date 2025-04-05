@@ -97,7 +97,7 @@ public class SparqlInRdfToMd {
 			rq.add(asMermaid);
 			rq.add("```");
 		} catch (MalformedQueryException | IllegalArgumentException e) {
-			log.debug("Could not convert to mermaid", e);
+			log.debug("Could not convert " + ex + " to mermaid", e);
 		}
 		return rq;
 	}
