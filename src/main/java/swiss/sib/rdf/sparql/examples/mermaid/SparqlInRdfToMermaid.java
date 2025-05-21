@@ -75,10 +75,10 @@ public class SparqlInRdfToMermaid {
 
 		try {
 			draw(rq, query, base, iriPrefixes);
-		} catch (MalformedQueryException e) {
+		} catch (MalformedQueryException |IllegalArgumentException e) {
 			LoggerFactory.getLogger(SparqlInRdfToMermaid.class).info("Query:{} can not be transformed to mermaid",
 					queryId.getSubject());
-		}
+		} 
 	}
 
 	private static void draw(List<String> rq, String query, String base, Map<String, String> iriPrefixes) {

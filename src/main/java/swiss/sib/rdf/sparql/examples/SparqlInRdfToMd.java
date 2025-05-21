@@ -178,6 +178,7 @@ public class SparqlInRdfToMd {
 
 	private static void countInEachQuery(Model ex, Counter counter, Resource queryId, Statement q) {
 		String base = streamOf(ex, q.getSubject(), SchemaDotOrg.TARGET, null).map(Statement::getObject)
+				.filter(Value::isIRI)
 				.map(Value::stringValue).findFirst().orElse("https://example.org/");
 		QueryParser parser = new SPARQLParserFactory().getParser();
 		String query = q.getObject().stringValue();
