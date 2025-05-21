@@ -62,7 +62,9 @@ public class SparqlInRdfToMermaid {
 	public static void draw(Statement queryId, Model ex, List<String> rq) {
 		String query = queryId.getObject().stringValue();
 
+		// In the void generator case the target is a blank node.
 		String base = streamOf(ex, queryId.getSubject(), SchemaDotOrg.TARGET, null).map(Statement::getObject)
+				.filter(Value::isIRI)
 				.map(Value::stringValue).findFirst().orElse("https://example.org/");
 
 		Iterator<Statement> iterator = streamOf(ex, null, SHACL.PREFIX_PROP, null).iterator();
