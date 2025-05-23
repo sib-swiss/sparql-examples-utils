@@ -2,6 +2,7 @@ package swiss.sib.rdf.sparql.examples.vocabularies;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Namespace;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.base.AbstractNamespace;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 
@@ -18,6 +19,9 @@ public class SIB {
 	public static final IRI PROJECT = SimpleValueFactory.getInstance().createIRI(NAMESPACE, "project");
 	
 	public static final IRI FEDERATES_WITH = SimpleValueFactory.getInstance().createIRI(NAMESPACE, "federatesWith");
+	
+	//Todo: finalize module associated constants
+	public static final IRI PORT = SimpleValueFactory.getInstance().createIRI(NAMESPACE, "ModulePort");
 	public static final Namespace NS = new AbstractNamespace() {
 
 		private static final long serialVersionUID = 1L;
@@ -33,6 +37,7 @@ public class SIB {
 		}
 		
 	};
+	
 	
 	private SIB() {
 		
