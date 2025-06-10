@@ -16,6 +16,7 @@ public class SIB {
 	public static final IRI FILE_NAME = SimpleValueFactory.getInstance().createIRI(NAMESPACE, "file_name");
 	public static final IRI FILE_PATH = SimpleValueFactory.getInstance().createIRI(NAMESPACE, "file_path");
 	public static final IRI PROJECT = SimpleValueFactory.getInstance().createIRI(NAMESPACE, "project");
+	public static final IRI SUB_PROJECT = SimpleValueFactory.getInstance().createIRI(NAMESPACE, "sub_project");
 	
 	public static final IRI FEDERATES_WITH = SimpleValueFactory.getInstance().createIRI(NAMESPACE, "federatesWith");
 	public static final Namespace NS = new AbstractNamespace() {

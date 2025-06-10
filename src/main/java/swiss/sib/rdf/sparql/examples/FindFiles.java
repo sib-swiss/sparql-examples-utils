@@ -19,21 +19,21 @@ public class FindFiles {
 				&& Files.isRegularFile(p);
 	}
 
-	public static Stream<Path> sparqlExamples() throws URISyntaxException, IOException {
+	public static Stream<Path> sparqlExamples() throws IOException {
 		return sparqlExamples(getBasePath());
 	}
 	
 	public static Stream<Path> sparqlExamples(Path path) throws IOException {
-		return Files.walk(path).filter(FindFiles::isTurtleButNotPrefixFile);
+		return Files.list(path).filter(FindFiles::isTurtleButNotPrefixFile);
 	}
 
-	public static Path getBasePath() throws URISyntaxException {
+	public static Path getBasePath() {
 		
 //		URL baseDir = FindFiles.class.getResource("/");
 		return Paths.get(System.getProperty(Tester.class.getName()));
 	}
 
-	public static Stream<Path> allPrefixFiles() throws IOException, URISyntaxException{
+	public static Stream<Path> allPrefixFiles() throws IOException{
 		return Files.walk(getBasePath()).filter(FindFiles::isTurtleAndPrefixFile);
 	}
 

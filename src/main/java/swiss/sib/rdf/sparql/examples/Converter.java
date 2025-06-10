@@ -1,8 +1,11 @@
 package swiss.sib.rdf.sparql.examples;
 
+import static org.eclipse.rdf4j.common.lang.FileFormat.matchFileName;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
@@ -122,14 +125,14 @@ public class Converter implements Callable<Integer>{
 
 	private void convertPerSingle(String extension, Function<Model, List<String>> converter, Function<Model, List<String>> converterPerProject, Function<Model, List<String>> converterForAll) throws NeedToStopException{
 		if ("all".equals(projects)) {
-			try (Stream<Path> list = Files.list(inputDirectory)) {
-				convertProjectsPerSingle(list, extension, converter, converterPerProject);
+			try (Stream<Path> subInputDirs = Files.list(inputDirectory).filter(Files::isDirectory)) {
+				convertProjectsPerSingle(subInputDirs, extension, converter, converterPerProject);
 			} catch (IOException e) {
 				throw new NeedToStopException(e, Failure.CANT_READ_INPUT_DIRECTORY);
 			}
 		} else {
-			try (Stream<Path> list = COMMA.splitAsStream(projects).map(inputDirectory::resolve)) {
-				convertProjectsPerSingle(list, extension, converter, converterPerProject);
+			try (Stream<Path> subInputDirs = COMMA.splitAsStream(projects).map(inputDirectory::resolve)) {
+				convertProjectsPerSingle(subInputDirs, extension, converter, converterPerProject);
 			}
 		}
 		if (converterForAll != null) {
@@ -171,14 +174,23 @@ public class Converter implements Callable<Integer>{
 	private void convertProjectsPerSingle(Stream<Path> list, String extension, Function<Model, List<String>> converter, Function<Model, List<String>> convertPerProject) {
 		Optional<Path> findCommonPrefixes = FindFiles.prefixFile(inputDirectory).findFirst();
 		Model commonPrefixes = prefixModel(findCommonPrefixes);
-		list.filter(Files::isDirectory).forEach(pro -> {
+		list
+		.flatMap(p -> {
+			try {
+				return Files.walk(p, FileVisitOption.FOLLOW_LINKS);
+			} catch (IOException e) {
+				throw Failure.CANT_READ_EXAMPLE.tothrow(e);
+			}
+		})
+		.filter(Files::isDirectory)
+		.forEach(pro -> {
 			try {
 				Optional<Path> findProjectPrefixes = FindFiles.prefixFile(pro).findFirst();
 				Model projectPrefixes = prefixModel(findProjectPrefixes);
 				Model allForProject = new LinkedHashModel();
 				allForProject.addAll(commonPrefixes);
 				allForProject.addAll(projectPrefixes);
-				FindFiles.sparqlExamples(pro).forEach((p) -> parseAndRenderSingleExample(extension, converter,
+				FindFiles.sparqlExamples(pro).forEach(p -> parseAndRenderSingleExample(extension, converter,
 						commonPrefixes, projectPrefixes, allForProject, p));
 				if (convertPerProject != null) {
 					renderAllExamplesInAProject(extension, convertPerProject, pro, allForProject);
@@ -194,6 +206,18 @@ public class Converter implements Callable<Integer>{
 		String prqfn = "index."+extension;
 		Path indexMd = pro.resolve(prqfn);
 		try {
+			try (Stream<Path> subs = Files.list(pro).filter(Files::isDirectory).filter(d -> {
+				try {
+					return FindFiles.sparqlExamples(d).findAny().isPresent();
+				} catch (IOException e) {
+					throw Failure.CANT_READ_EXAMPLE.tothrow(e);
+				}
+			})) {
+				subs.forEach(p -> {
+					allForProject.add(VF.createStatement(VF.createIRI(pro.toUri().toString()), SIB.SUB_PROJECT,
+							VF.createLiteral(p.getFileName().toString())));
+				});
+			}
 			List<String> rq = convertPerProject.apply(allForProject);
 			Files.write(indexMd, rq, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
 		} catch (IOException e) {
@@ -280,7 +304,7 @@ public class Converter implements Callable<Integer>{
 
 	private void print(Model model) {
 		Rio.write(model, System.out,
-				RDFFormat.matchFileName("a." + outputFormat, outputFormats).orElse(RDFFormat.TURTLE));
+				matchFileName("a." + outputFormat, outputFormats).orElse(RDFFormat.TURTLE));
 	}
 
 }
