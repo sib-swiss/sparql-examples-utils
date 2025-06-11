@@ -92,12 +92,10 @@ public class ValidateSparqlExamplesTest {
 		return FindFiles.allPrefixFiles().flatMap(this::testPrefixes);
 	}
 
-	private Stream<DynamicTest> testAll(Function<Path, Executable> tester)
-			throws URISyntaxException, IOException {
-		return Files.list(FindFiles.getBasePath()).flatMap(projectPath -> {
+	private Stream<DynamicTest> testAll(Function<Path, Executable> tester) throws URISyntaxException, IOException {
+		return Files.list(FindFiles.getBasePath()).filter(Files::isDirectory).flatMap(projectPath -> {
 			try {
-				return FindFiles.sparqlExamples(projectPath)
-						.map(p -> createTest(tester, projectPath, p));
+				return FindFiles.sparqlExamples(projectPath).map(p -> createTest(tester, projectPath, p));
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

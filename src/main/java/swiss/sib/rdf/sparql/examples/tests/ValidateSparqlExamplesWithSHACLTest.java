@@ -8,6 +8,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -33,39 +34,6 @@ import org.junit.jupiter.api.TestFactory;
 import swiss.sib.rdf.sparql.examples.FindFiles;
 
 public class ValidateSparqlExamplesWithSHACLTest {
-	private static final String shaclOneIdOneQuery = """
-			PREFIX sh:<http://www.w3.org/ns/shacl#>
-			PREFIX schema:<https://schema.org/>
-			PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-			PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-			PREFIX spex: <https://purl.expasy.org/sparql-examples/ontology#>
-			[] sh:targetClass sh:SPARQLExecutable ;
-				sh:property [
-					sh:path [ sh:alternativePath ( sh:select sh:ask spex:describe sh:construct ) ] ;
-					sh:maxCount 1 ;
-					sh:minCount 1
-				] , 
-				[
-					sh:path rdfs:comment ;
-					sh:minCount 1 ; 
-					sh:or ( [
-							sh:datatype rdf:langString ;
-							# sh:uniqueLang true ;
-						] 
-						[
-							sh:datatype rdf:HTML ;
-						] ) 
-				], [
-				sh:path schema:target;
-					sh:minCount 1 ] , [
-				sh:path schema:keyword;  # Typo not allowed
-					sh:maxCount 0 ] , [
-				sh:path schema:keyowrds;  # Typo not allowed
-					sh:maxCount 0 ] , [
-				sh:path schema:keywords; # Encouraged but not required.
-					sh:minCount 0 ] .
-			""";
-
 	private static MemoryStore memoryStore;
 	private static Repository repo;
 
@@ -80,10 +48,10 @@ public class ValidateSparqlExamplesWithSHACLTest {
 		repo = new SailRepository(shaclSail);
 
 		try (RepositoryConnection connection = repo.getConnection();
-				StringReader sr = new StringReader(shaclOneIdOneQuery)) {
+				var is = ValidateSparqlExamplesWithSHACLTest.class.getResourceAsStream("/spex.shacl")) {
 			// add shapes
 			connection.begin();
-			connection.add(sr, RDFFormat.TURTLE, RDF4J.SHACL_SHAPE_GRAPH);
+			connection.add(is, RDFFormat.TURTLE, RDF4J.SHACL_SHAPE_GRAPH);
 			connection.commit();
 		} catch (RDFParseException | RepositoryException | IOException e) {
 			fail(e);
@@ -98,8 +66,8 @@ public class ValidateSparqlExamplesWithSHACLTest {
 	}
 
 	/**
-	 * Use shacl to test all the turtle files contain at least one rdfs:comment and one query.
-	 * Also makes a test that all example IRIs are unique.
+	 * Use shacl to test all the turtle files contain at least one rdfs:comment and
+	 * one query. Also makes a test that all example IRIs are unique.
 	 * 
 	 * @return a test for each file.
 	 * @throws URISyntaxException
@@ -112,7 +80,7 @@ public class ValidateSparqlExamplesWithSHACLTest {
 				"Shacl testing: " + p.getParent().getFileName() + '/' + p.getFileName(), () -> testValidatingAFile(p)));
 	}
 
-	private static void testValidatingAFile(Path p) {
+	static void testValidatingAFile(Path p) {
 		assertTrue(Files.exists(p));
 		try (RepositoryConnection connection = repo.getConnection()) {
 

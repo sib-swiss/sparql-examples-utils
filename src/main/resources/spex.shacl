@@ -1,0 +1,34 @@
+PREFIX sh:<http://www.w3.org/ns/shacl#>
+PREFIX sd:<http://www.w3.org/ns/sparql-service-description#>
+PREFIX schema:<https://schema.org/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX spex: <https://purl.expasy.org/sparql-examples/ontology#>
+[] sh:targetClass sh:SPARQLExecutable ;
+	sh:property [
+		sh:path [ sh:alternativePath ( sh:select sh:ask spex:describe sh:construct ) ] ;
+		sh:maxCount 1 ;
+		sh:minCount 1
+	] , 
+	[
+		sh:path rdfs:comment ;
+		sh:minCount 1 ; 
+		sh:or ( [
+				sh:datatype rdf:langString ;
+				# sh:uniqueLang true ;
+			] 
+			[
+				sh:datatype rdf:HTML ;
+			] ) 
+	], [
+	sh:path schema:target;
+		sh:minCount 1 ] , [
+	sh:path schema:keyword;  # Typo not allowed
+		sh:maxCount 0 ] , [
+	sh:path schema:keyowrds; # Typo not allowed
+		sh:maxCount 0 ] , [
+	sh:path schema:keywords; # Encouraged but not required.
+		sh:minCount 0 ] , [
+    sh:path spex:federatesWith;
+        sh:minCount 0 ] .
+

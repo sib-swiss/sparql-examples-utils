@@ -86,7 +86,7 @@ public class ExamplesUsedInTest {
 	  FILTER(?isTransport = true)
 	  FILTER(contains(?isTransport, "true"))
 	}''' . """;
-	static String simple = """
+	public static String simple = """
 				prefix ex: <https://sparql.swisslipids.org/.well-known/sparql-examples/>
 	prefix sh: <http://www.w3.org/ns/shacl#>
 	prefix schema:<https://schema.org/>
