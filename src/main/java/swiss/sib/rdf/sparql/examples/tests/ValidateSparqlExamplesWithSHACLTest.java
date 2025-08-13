@@ -76,7 +76,15 @@ public class ValidateSparqlExamplesWithSHACLTest {
 	@TestFactory
 	public Stream<DynamicTest> testShaclConstraints() throws URISyntaxException, IOException {
 		Stream<Path> paths = FindFiles.sparqlExamples();
-		return paths.map(p -> DynamicTest.dynamicTest(
+		Stream<Path> paths2= Files.list(FindFiles.getBasePath()).filter(Files::isDirectory).flatMap(projectPath -> {
+			try {
+				return FindFiles.sparqlExamples(projectPath);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		});
+		
+		return Stream.concat(paths, paths2).map(p -> DynamicTest.dynamicTest(
 				"Shacl testing: " + p.getParent().getFileName() + '/' + p.getFileName(), () -> testValidatingAFile(p)));
 	}
 
