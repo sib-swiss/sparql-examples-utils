@@ -2,7 +2,7 @@ package swiss.sib.rdf.sparql.examples;
 
 public class ExamplesUsedInTest {
 
-	static String rhea9 = """
+	public static String rhea9 = """
 	prefix ex: <https://sparql.rhea-db.org/.well-known/sparql-examples/>
 	prefix sh: <http://www.w3.org/ns/shacl#>
 	prefix schema:<https://schema.org/>
