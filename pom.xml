@@ -28,7 +28,7 @@
 		<project.tests.exclude>SlowTest</project.tests.exclude>
 		<native.maven.plugin.version>0.10.3</native.maven.plugin.version>
         <picocli.version>4.7.6</picocli.version>
-        <graalpy.version>24.1.0</graalpy.version>
+        <graalpy.version>24.2.2</graalpy.version>
         <graalpy.edition>python-community</graalpy.edition>
 	</properties>
 	<profiles>
@@ -411,23 +411,17 @@
         <version>${graalpy.version}</version>
         <executions>
           <execution>
-            <configuration>
-              <packages>
-                <package>rdflib==7.1.3</package>
-              </packages>
-              <pythonHome>
-                <includes>
-                  <include>.*</include>
-                </includes>
-                <excludes>
-                </excludes>
-              </pythonHome>
-            </configuration>
             <goals>
               <goal>process-graalpy-resources</goal>
             </goals>
           </execution>
         </executions>
+        <configuration>
+          <resourceDirectory>GRAALPY-VFS/${project.groupId}/${project.artifactId}</resourceDirectory>
+            <packages>
+              <package>rdflib==7.1.3</package>
+            </packages>
+          </configuration>
       </plugin>
 			<plugin>
 				<artifactId>maven-compiler-plugin</artifactId>

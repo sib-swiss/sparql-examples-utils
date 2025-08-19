@@ -9,39 +9,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
-import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
-import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.SHACL;
-import org.eclipse.rdf4j.query.BooleanQuery;
-import org.eclipse.rdf4j.query.GraphQuery;
-import org.eclipse.rdf4j.query.GraphQueryResult;
-import org.eclipse.rdf4j.query.MalformedQueryException;
-import org.eclipse.rdf4j.query.Query;
-import org.eclipse.rdf4j.query.QueryEvaluationException;
-import org.eclipse.rdf4j.query.TupleQuery;
-import org.eclipse.rdf4j.query.TupleQueryResult;
-import org.eclipse.rdf4j.query.algebra.Service;
-import org.eclipse.rdf4j.query.algebra.Slice;
-import org.eclipse.rdf4j.query.algebra.helpers.AbstractQueryModelVisitor;
-import org.eclipse.rdf4j.query.parser.ParsedQuery;
-import org.eclipse.rdf4j.query.parser.QueryParser;
-import org.eclipse.rdf4j.query.parser.sparql.SPARQLParserFactory;
-import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.eclipse.rdf4j.repository.sparql.SPARQLRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
@@ -50,26 +27,15 @@ import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Context.Builder;
+import org.graalvm.python.embedding.GraalPyResources;
+import org.graalvm.python.embedding.VirtualFileSystem;
 
 import swiss.sib.rdf.sparql.examples.vocabularies.SIB;
-import swiss.sib.rdf.sparql.examples.vocabularies.SchemaDotOrg;
-import org.graalvm.polyglot.Source;
-import org.graalvm.polyglot.io.IOAccess;
 
 public class CreateTestWithPythonRdfLibMethods {
 
-	private enum QueryTypes {
-		ASK(SHACL.ASK, (rc, q) -> rc.prepareBooleanQuery(q)), SELECT(SHACL.SELECT, (rc, q) -> rc.prepareTupleQuery(q)),
-		DESCRIBE(SIB.DESCRIBE, (rc, q) -> rc.prepareGraphQuery(q)),
-		CONSTRUCT(SHACL.CONSTRUCT, (rc, q) -> rc.prepareGraphQuery(q));
+	private CreateTestWithPythonRdfLibMethods() {
 
-		private final IRI iri;
-		private final BiFunction<RepositoryConnection, String, ? extends Query> pq;
-
-		QueryTypes(IRI iri, BiFunction<RepositoryConnection, String, ? extends Query> pq) {
-			this.iri = iri;
-			this.pq = pq;
-		}
 	}
 
 	static void testQueryValid(Path p) {
@@ -98,23 +64,30 @@ public class CreateTestWithPythonRdfLibMethods {
 		}
 	}
 
-	private static final Source PYTHON_SOURCE = Source.newBuilder("python", """
-			from rdflib.plugins.sparql import prepareQuery
-			try:
-				q = prepareQuery(
-				    query
-				)
-				return true
-			except:
-				return false
-			""", "rdflib-test.py").buildLiteral();
 
-	private static final Builder CONTEXT_BUILDER = Context.newBuilder().option("engine.WarnInterpreterOnly", "false")
-			.allowIO(IOAccess.NONE).allowCreateThread(true).allowNativeAccess(true);
+	private static final VirtualFileSystem VFS = VirtualFileSystem.newBuilder()
+			.resourceDirectory("GRAALPY-VFS/swiss.sib.rdf/sparql-examples-utils").build();
+
+	static final Builder CONTEXT_BUILDER = GraalPyResources.contextBuilder(VFS)
+			.option("engine.WarnInterpreterOnly", "false")
+			.allowAllAccess(true);
 	private static final Predicate<String> SERVICE_PATTERN = Pattern.compile("service", Pattern.CASE_INSENSITIVE)
 			.asPredicate();
 
-	private static void testQueryStringInValue(Context context, Statement next) {
+	private static final String PYTHON = "python";
+	private static final String TEST_SCRIPT = """
+             from rdflib.plugins.sparql.parser import parseQuery
+             def test(query):
+                 try:
+                     parseQuery(query)
+                     return True
+                 except:
+                     return False
+             test
+             """;
+
+
+	static void testQueryStringInValue(Context context, Statement next) {
 		Value obj = next.getObject();
 		assertNotNull(obj);
 		assertTrue(obj.isLiteral());
@@ -122,7 +95,8 @@ public class CreateTestWithPythonRdfLibMethods {
 		if (SERVICE_PATTERN.test(query)) {
 			return;
 		}
-		context.getBindings("python").putMember("query", next.getObject().stringValue());
-		assertTrue(context.eval(PYTHON_SOURCE).asBoolean());
+		@SuppressWarnings("unchecked")
+		Predicate<String> t = context.eval(PYTHON, TEST_SCRIPT).as(Predicate.class);
+		assertTrue(t.test(query));
 	}
 }

@@ -51,22 +51,21 @@ public class ValidateSparqlExamplesTest {
 	}
 	
 	@TestFactory
-	public Stream<DynamicTest> testAllWithBigData() throws URISyntaxException, IOException {
+	public Stream<DynamicTest> testAllWithBigData() throws IOException {
 		Function<Path, Executable> tester = p -> () -> CreateTestWithBigDataMethods.testQueryValid(p);
 		return testAll(tester);
 	}
 	
-	@Tag("PythonTest")
 	@TestFactory
-	public Stream<DynamicTest> testAllWithRdfLib() throws URISyntaxException, IOException {
-		Function<Path, Executable> tester = (p) -> () -> CreateTestWithPythonRdfLibMethods.testQueryValid(p);
+	public Stream<DynamicTest> testAllWithRdflib() throws IOException {
+		Function<Path, Executable> tester = p -> () -> CreateTestWithPythonRdfLibMethods.testQueryValid(p);
 		return testAll(tester);
 	}
 
 	@Tag("SlowTest")
 	@TestFactory
-	public Stream<DynamicTest> testAllService() throws URISyntaxException, IOException {
-		Function<Path, Stream<String>> tester = p -> CreateTestWithRDF4jMethods.extractServiceEndpoints(p);
+	public Stream<DynamicTest> testAllService() throws IOException {
+		Function<Path, Stream<String>> tester = CreateTestWithRDF4jMethods::extractServiceEndpoints;
 		Consumer<String> consumer = s -> {
 			try (HttpClient client = HttpClient.newHttpClient()) {
 				HttpRequest askAnything = HttpRequest.newBuilder()
@@ -100,7 +99,7 @@ public class ValidateSparqlExamplesTest {
 	@TestFactory
 	@Tag("SlowTest")
 	public Stream<DynamicTest> testAllQueriesRun() throws URISyntaxException, IOException {
-		Function<Path, Executable> tester = (p) -> () -> CreateTestWithRDF4jMethods.testQueryRuns(p);
+		Function<Path, Executable> tester = p -> () -> CreateTestWithRDF4jMethods.testQueryRuns(p);
 		return testAll(tester);
 	}
 
@@ -121,7 +120,7 @@ public class ValidateSparqlExamplesTest {
 	@TestFactory
     public Stream<DynamicTest> testAllServicesAnnotated() throws URISyntaxException, IOException {
 
-            Function<Path, Executable> tester = (p) -> () -> CreateTestWithRDF4jMethods.testQueryAnnotatedWithFederatesWith(p);
+            Function<Path, Executable> tester = p -> () -> CreateTestWithRDF4jMethods.testQueryAnnotatedWithFederatesWith(p);
             return testAll(tester);
     }
 
