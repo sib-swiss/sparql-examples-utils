@@ -33,33 +33,32 @@ public class ValidateSparqlExamplesTest {
 
 	@TestFactory
 	public Stream<DynamicTest> testAllWithJena() throws URISyntaxException, IOException {
-		Function<Path, Executable> tester = (p) -> () -> CreateTestWithJenaMethods.testQueryValid(p);
+		Function<Path, Executable> tester = p -> () -> CreateTestWithJenaMethods.testQueryValid(p);
 		return testAll(tester);
 	}
 
 	@TestFactory
 	public Stream<DynamicTest> testAllWithRDF4j() throws URISyntaxException, IOException {
-		Function<Path, Executable> tester = (p) -> () -> CreateTestWithRDF4jMethods.testQueryValid(p);
+		Function<Path, Executable> tester = p -> () -> CreateTestWithRDF4jMethods.testQueryValid(p);
 		return testAll(tester);
 	}
 	
 	@TestFactory
 	public Stream<DynamicTest> testAllWithBigData() throws URISyntaxException, IOException {
-		Function<Path, Executable> tester = (p) -> () -> CreateTestWithBigDataMethods.testQueryValid(p);
+		Function<Path, Executable> tester = p -> () -> CreateTestWithBigDataMethods.testQueryValid(p);
 		return testAll(tester);
 	}
 	
-	@Tag("PythonTest")
 	@TestFactory
-	public Stream<DynamicTest> testAllWithRdfLib() throws URISyntaxException, IOException {
-		Function<Path, Executable> tester = (p) -> () -> CreateTestWithPythonRdfLibMethods.testQueryValid(p);
+	public Stream<DynamicTest> testAllWithRdflib() throws URISyntaxException, IOException {
+		Function<Path, Executable> tester = p -> () -> CreateTestWithPythonRdfLibMethods.testQueryValid(p);
 		return testAll(tester);
 	}
 
 	@Tag("SlowTest")
 	@TestFactory
 	public Stream<DynamicTest> testAllService() throws URISyntaxException, IOException {
-		Function<Path, Stream<String>> tester = (p) -> CreateTestWithRDF4jMethods.extractServiceEndpoints(p);
+		Function<Path, Stream<String>> tester = CreateTestWithRDF4jMethods::extractServiceEndpoints;
 		Consumer<String> consumer = s -> {
 			try (HttpClient client = HttpClient.newHttpClient()) {
 				HttpRequest askAnything = HttpRequest.newBuilder()
@@ -79,7 +78,10 @@ public class ValidateSparqlExamplesTest {
 					}
 				}
 				assertTrue(body.contains("true") || body.contains("false"));
-			} catch (URISyntaxException | IOException | InterruptedException e) {
+			} catch (URISyntaxException | IOException e) {
+				fail(s, e);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
 				fail(s, e);
 			}
 		};
@@ -90,7 +92,7 @@ public class ValidateSparqlExamplesTest {
 	@TestFactory
 	@Tag("SlowTest")
 	public Stream<DynamicTest> testAllQueriesRun() throws URISyntaxException, IOException {
-		Function<Path, Executable> tester = (p) -> () -> CreateTestWithRDF4jMethods.testQueryRuns(p);
+		Function<Path, Executable> tester = p -> () -> CreateTestWithRDF4jMethods.testQueryRuns(p);
 		return testAll(tester);
 	}
 
@@ -115,7 +117,7 @@ public class ValidateSparqlExamplesTest {
 			Function<Stream<T>, Stream<DynamicTest>> test) throws URISyntaxException, IOException {
 		return test.apply(Files.list(FindFiles.getBasePath()).flatMap(projectPath -> {
 			try {
-				return FindFiles.sparqlExamples(projectPath).flatMap(p -> tester.apply(p));
+				return FindFiles.sparqlExamples(projectPath).flatMap(tester::apply);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
@@ -125,7 +127,7 @@ public class ValidateSparqlExamplesTest {
 	@TestFactory
     public Stream<DynamicTest> testAllServicesAnnotated() throws URISyntaxException, IOException {
 
-            Function<Path, Executable> tester = (p) -> () -> CreateTestWithRDF4jMethods.testQueryAnnotatedWithFederatesWith(p);
+            Function<Path, Executable> tester = p -> () -> CreateTestWithRDF4jMethods.testQueryAnnotatedWithFederatesWith(p);
             return testAll(tester);
     }
 
