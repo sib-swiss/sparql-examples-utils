@@ -33,26 +33,26 @@ public class ValidateSparqlExamplesTest {
 
 	@TestFactory
 	public Stream<DynamicTest> testAllWithJena() throws URISyntaxException, IOException {
-		Function<Path, Executable> tester = (p) -> () -> CreateTestWithJenaMethods.testQueryValid(p);
+		Function<Path, Executable> tester = p -> () -> CreateTestWithJenaMethods.testQueryValid(p);
 		return testAll(tester);
 	}
 
 	@TestFactory
 	public Stream<DynamicTest> testAllWithRDF4j() throws URISyntaxException, IOException {
-		Function<Path, Executable> tester = (p) -> () -> CreateTestWithRDF4jMethods.testQueryValid(p);
+		Function<Path, Executable> tester = p -> () -> CreateTestWithRDF4jMethods.testQueryValid(p);
 		return testAll(tester);
 	}
 	
 	@TestFactory
 	public Stream<DynamicTest> testAllWithBigData() throws URISyntaxException, IOException {
-		Function<Path, Executable> tester = (p) -> () -> CreateTestWithBigDataMethods.testQueryValid(p);
+		Function<Path, Executable> tester = p -> () -> CreateTestWithBigDataMethods.testQueryValid(p);
 		return testAll(tester);
 	}
 
 	@Tag("SlowTest")
 	@TestFactory
 	public Stream<DynamicTest> testAllService() throws URISyntaxException, IOException {
-		Function<Path, Stream<String>> tester = (p) -> CreateTestWithRDF4jMethods.extractServiceEndpoints(p);
+		Function<Path, Stream<String>> tester = p -> CreateTestWithRDF4jMethods.extractServiceEndpoints(p);
 		Consumer<String> consumer = s -> {
 			try (HttpClient client = HttpClient.newHttpClient()) {
 				HttpRequest askAnything = HttpRequest.newBuilder()
@@ -72,7 +72,10 @@ public class ValidateSparqlExamplesTest {
 					}
 				}
 				assertTrue(body.contains("true") || body.contains("false"));
-			} catch (URISyntaxException | IOException | InterruptedException e) {
+			} catch (URISyntaxException | IOException e) {
+				fail(s, e);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
 				fail(s, e);
 			}
 		};
@@ -88,11 +91,11 @@ public class ValidateSparqlExamplesTest {
 	}
 
 	@TestFactory
-	public Stream<DynamicTest> testPrefixDeclarations() throws URISyntaxException, IOException {
+	public Stream<DynamicTest> testPrefixDeclarations() throws IOException {
 		return FindFiles.allPrefixFiles().flatMap(this::testPrefixes);
 	}
 
-	private Stream<DynamicTest> testAll(Function<Path, Executable> tester) throws URISyntaxException, IOException {
+	private Stream<DynamicTest> testAll(Function<Path, Executable> tester) throws IOException {
 		return Files.list(FindFiles.getBasePath()).filter(Files::isDirectory).flatMap(projectPath -> {
 			try {
 				return FindFiles.sparqlExamples(projectPath).map(p -> createTest(tester, projectPath, p));
@@ -103,10 +106,10 @@ public class ValidateSparqlExamplesTest {
 	}
 
 	private <T> Stream<DynamicTest> testAllAsOne(Function<Path, Stream<T>> tester,
-			Function<Stream<T>, Stream<DynamicTest>> test) throws URISyntaxException, IOException {
+			Function<Stream<T>, Stream<DynamicTest>> test) throws IOException {
 		return test.apply(Files.list(FindFiles.getBasePath()).flatMap(projectPath -> {
 			try {
-				return FindFiles.sparqlExamples(projectPath).flatMap(p -> tester.apply(p));
+				return FindFiles.sparqlExamples(projectPath).flatMap(tester::apply);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}

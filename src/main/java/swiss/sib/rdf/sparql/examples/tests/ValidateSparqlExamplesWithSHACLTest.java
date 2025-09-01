@@ -6,9 +6,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
@@ -74,7 +72,7 @@ public class ValidateSparqlExamplesWithSHACLTest {
 	 * @throws IOException
 	 */
 	@TestFactory
-	public Stream<DynamicTest> testShaclConstraints() throws URISyntaxException, IOException {
+	public Stream<DynamicTest> testShaclConstraints() throws IOException {
 		Stream<Path> paths = FindFiles.sparqlExamples();
 		Stream<Path> paths2= Files.list(FindFiles.getBasePath()).filter(Files::isDirectory).flatMap(projectPath -> {
 			try {
