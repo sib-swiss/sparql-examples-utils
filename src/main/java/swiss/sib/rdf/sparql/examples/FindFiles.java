@@ -10,8 +10,8 @@ import java.util.stream.Stream;
 public class FindFiles {
 
 	public static boolean isTurtleButNotPrefixFile(Path p) {
-		return Files.exists(p) && p.toUri().getPath().endsWith(".ttl") && !p.toUri().getPath().endsWith("prefixes.ttl")
-				&& Files.isRegularFile(p);
+		return Files.exists(p) && Files.isRegularFile(p) && p.toUri().getPath().endsWith(".ttl")
+				&& !p.toUri().getPath().endsWith("prefixes.ttl");
 	}
 	
 	private static boolean isTurtleAndPrefixFile(Path p) {
