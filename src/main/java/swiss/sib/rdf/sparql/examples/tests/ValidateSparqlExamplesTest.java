@@ -43,6 +43,13 @@ public class ValidateSparqlExamplesTest {
 		return testAll(tester);
 	}
 	
+	@Tag("VoIDTest")
+	@TestFactory
+	public Stream<DynamicTest> testAllWithRDF4jVoID() throws URISyntaxException, IOException {
+		Function<Path, Executable> tester = p -> () -> CreateTestWithRDF4jMethods.testQueryMatchesVoid(p);
+		return testAll(tester);
+	}
+	
 	@TestFactory
 	public Stream<DynamicTest> testAllWithBigData() throws URISyntaxException, IOException {
 		Function<Path, Executable> tester = p -> () -> CreateTestWithBigDataMethods.testQueryValid(p);

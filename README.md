@@ -73,6 +73,16 @@ The queries can be executed automatically on all endpoints they apply to using a
 java -jar target/sparql-examples-utils-*-uber.jar test --input-directory=../sparql-examples/examples -p MetaNetX --also-run-slow-tests
 ```
 
+### Using VoID data
+
+We recommend that SPARQL endpoints describe their data using VoID, in their service description.
+This can be run with.
+
+```bash
+java -jar target/sparql-examples-utils-*-uber.jar test --input-directory=../sparql-examples/examples -p UniProt --also-run-void-check
+```
+
+
 > [!NOTE]
 >
 > All CLI commands provided in this readme expects you have the [`sparql-examples`](https://github.com/sib-swiss/sparql-examples) folder cloned in the same directory alongside this `sparql-examples-utils` project folder. Feel free to change them for your own example folder and path.

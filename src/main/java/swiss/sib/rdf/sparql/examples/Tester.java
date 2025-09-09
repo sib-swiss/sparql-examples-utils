@@ -49,6 +49,9 @@ public class Tester implements Callable<Integer> {
 
 	@Option(names = { "--also-run-slow-tests" })
 	private boolean alsoRunSlowTests;
+	
+	@Option(names = { "--also-run-void-check" })
+	private boolean alsoRunVoidCheck;
 
 	@Option(names = { "--status-markdown" })
 	private File statusMarkdown;
@@ -101,6 +104,11 @@ public class Tester implements Callable<Integer> {
 			standardOptions = new ArrayList<>(standardOptions);
 			standardOptions.add("--exclude-tag");
 			standardOptions.add("SlowTest");
+		}
+		if (!alsoRunVoidCheck) {
+			standardOptions = new ArrayList<>(standardOptions);
+			standardOptions.add("--exclude-tag");
+			standardOptions.add("VoIDTest");
 		}
 		ConsoleLauncherExecutionResult execute = ConsoleLauncher.execute(System.out, System.err,
 				(String[]) standardOptions.toArray(new String[0]));
