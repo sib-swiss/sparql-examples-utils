@@ -5,24 +5,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.http.HttpClient;
-import java.net.http.HttpClient.Builder;
-import java.net.http.HttpClient.Redirect;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandler;
-import java.net.http.HttpResponse.BodyHandlers;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -36,7 +25,6 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
-import org.eclipse.rdf4j.model.impl.TreeModel;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.SHACL;
 import org.eclipse.rdf4j.model.vocabulary.VOID;
@@ -62,15 +50,43 @@ import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import swiss.sib.rdf.sparql.examples.statistics.ServiceDescription;
 import swiss.sib.rdf.sparql.examples.vocabularies.SIB;
 import swiss.sib.rdf.sparql.examples.vocabularies.SchemaDotOrg;
 
 public class CreateTestWithRDF4jMethods {
-	private static final Logger logger = LoggerFactory.getLogger(CreateTestWithRDF4jMethods.class);
+
+	private static final class FailIfPredicateOrClassNotInVoidVisitor
+			extends AbstractQueryModelVisitor<MalformedQueryException> {
+		private final String endpoint;
+		private final Model voidData;
+
+		private FailIfPredicateOrClassNotInVoidVisitor(String endpoint, Model voidData) {
+			this.endpoint = endpoint;
+			this.voidData = voidData;
+		}
+
+		@Override
+		public void meet(Service node) throws MalformedQueryException {
+			// Do not descend into Service nodes.
+		}
+
+		@Override
+		public void meet(StatementPattern node) throws MalformedQueryException {
+			var p = node.getPredicateVar();
+			var o = node.getObjectVar();
+			if (p.isConstant() && p.getValue() instanceof IRI pi) {
+				if (RDF.TYPE.equals(pi) && o.getValue() instanceof IRI oi) {
+					assertTrue(voidData.contains(null, VOID.CLASS, oi), "Missing class: " + oi + " in "+ endpoint);
+				} else {
+					assertTrue(voidData.contains(null, VOID.PROPERTY, pi), "Missing property: " + pi + " in "+ endpoint);
+				}
+			}
+		}
+	}
 
 	private enum QueryTypes {
 		ASK(SHACL.ASK, (rc, q) -> rc.prepareBooleanQuery(q)), SELECT(SHACL.SELECT, (rc, q) -> rc.prepareTupleQuery(q)),
@@ -244,8 +260,16 @@ public class CreateTestWithRDF4jMethods {
 		String endpoint = target.stringValue();
 		Model voidData = voidDataCache.get(endpoint);
 		if (voidData == null) {
-			voidData = retrieveVoidDataFromServiceDescription(endpoint);
-			voidDataCache.put(endpoint, voidData);
+			try {
+				voidData = ServiceDescription.retrieveVoidDataFromServiceDescription(endpoint);
+				voidDataCache.put(endpoint, voidData);
+			} catch (RDFParseException | UnsupportedRDFormatException | IOException  e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				return;
+			}
 		}
 		if (!voidData.isEmpty()) {
 			testVoidProperties(parser, queryStr, endpoint, voidData);
@@ -255,72 +279,13 @@ public class CreateTestWithRDF4jMethods {
 	private static void testVoidProperties(QueryParser parser, String queryStr, String endpoint, Model voidData) {
 		try {
 			ParsedQuery pq = parser.parseQuery(queryStr, endpoint);
-			var vis = new AbstractQueryModelVisitor<MalformedQueryException>() {
-
-				@Override
-				public void meet(Service node) throws MalformedQueryException {
-					// Do not descend into Service nodes.
-				}
-
-				@Override
-				public void meet(StatementPattern node) throws MalformedQueryException {
-					var p = node.getPredicateVar();
-					var o = node.getObjectVar();
-					if (p.isConstant() && p.getValue() instanceof IRI pi) {
-						if (RDF.TYPE.equals(pi) && o.getValue() instanceof IRI oi) {
-							assertTrue(voidData.contains(null, VOID.CLASS, oi), "Missing class: " + oi + " in "+ endpoint);
-						} else {
-							assertTrue(voidData.contains(null, VOID.PROPERTY, pi), "Missing property: " + pi + " in "+ endpoint);
-						}
-					}
-				}
-
-			};
+			var vis = new FailIfPredicateOrClassNotInVoidVisitor(endpoint, voidData);
 			pq.getTupleExpr().visit(vis);
 		} catch (MalformedQueryException qe) {
 			fail(qe.getMessage() + "\n" + queryStr, qe);
 		} catch (QueryEvaluationException qe) {
 			fail(qe.getMessage() + "\n" + queryStr, qe);
 		}
-	}
-
-	private static Model retrieveVoidDataFromServiceDescription(String endpoint) {
-		Builder hcb = HttpClient.newBuilder();
-		hcb.followRedirects(Redirect.ALWAYS);
-
-		try (HttpClient cl = hcb.build()) {
-			try {
-				var accept = Stream.of(RDFFormat.TURTLE, RDFFormat.RDFXML).map(RDFFormat::getDefaultMIMEType)
-						.collect(Collectors.joining(", "));
-				HttpRequest hr = HttpRequest.newBuilder(new URI(endpoint))
-						.setHeader("user-agent", "sparql-examples-utils-check-void").setHeader("accept", accept)
-						.build();
-				BodyHandler<byte[]> buffering = BodyHandlers.buffering(BodyHandlers.ofByteArray(), 1024);
-				HttpResponse<byte[]> send = cl.send(hr, buffering);
-				if (send.statusCode() == 200) {
-					List<String> contentTypes = send.headers().allValues("content-type");
-					for (String ct : contentTypes) {
-						var p = Rio.getParserFormatForMIMEType(ct);
-						if (p.isPresent()) {
-							RDFFormat format = p.get();
-							Model model = Rio.parse(new ByteArrayInputStream(send.body()), format,
-									SimpleValueFactory.getInstance().createIRI(endpoint));
-							logger.info("VoID data for : {} triples: {}", endpoint, model.size());
-							return model;
-						}
-					}
-				}
-			} catch (IOException | URISyntaxException e) {
-				fail(e.getMessage());
-
-			} catch (InterruptedException e) {
-				fail(e.getMessage());
-				Thread.interrupted();
-			} catch (RDFHandlerException e) {
-				// Ignore
-			}
-		}
-		return new TreeModel();
 	}
 
 	private static void executeQueryStringInValue(QueryParser parser, Value obj, Value target, QueryTypes qt) {
