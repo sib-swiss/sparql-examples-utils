@@ -9,8 +9,10 @@ import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
@@ -86,9 +88,11 @@ public class Converter implements Callable<Integer>{
 		} else {
 			try {
 				if (outputMd) {
-					convertPerSingle("md", SparqlInRdfToMd::asMD, SparqlInRdfToMd::asIndexMD, SparqlInRdfToMd::asStatisticsMD);
+					Map<String, Function<Model, List<String>>> m = Map.of("algebra-statistics.",
+							SparqlInRdfToMd::asStatisticsMD, "void-statistics", SparqlInRdfToMd::asSchemaMD);
+					convertPerSingle("md", SparqlInRdfToMd::asMD, SparqlInRdfToMd::asIndexMD, m);
 				} else if (outputRq) {
-					convertPerSingle("rq", SparqlInRdfToRq::asRq, null, null);
+					convertPerSingle("rq", SparqlInRdfToRq::asRq, null, Collections.emptyMap());
 				} else {
 					convertToRdf();
 				}
@@ -123,7 +127,7 @@ public class Converter implements Callable<Integer>{
 		return model;
 	}
 
-	private void convertPerSingle(String extension, Function<Model, List<String>> converter, Function<Model, List<String>> converterPerProject, Function<Model, List<String>> converterForAll) throws NeedToStopException{
+	private void convertPerSingle(String extension, Function<Model, List<String>> converter, Function<Model, List<String>> converterPerProject, Map<String, Function<Model, List<String>>> converterForAll) throws NeedToStopException{
 		if ("all".equals(projects)) {
 			try (Stream<Path> subInputDirs = Files.list(inputDirectory).filter(Files::isDirectory)) {
 				convertProjectsPerSingle(subInputDirs, extension, converter, converterPerProject);
@@ -135,15 +139,17 @@ public class Converter implements Callable<Integer>{
 				convertProjectsPerSingle(subInputDirs, extension, converter, converterPerProject);
 			}
 		}
-		if (converterForAll != null) {
+		if (! converterForAll.isEmpty()) {
 			Model all = collectAllIntoSingleModel();
-			String prqfn = "algebra-statistics."+extension;
-			Path indexMd = inputDirectory.resolve(prqfn);
-			try {
-				List<String> rq = converterForAll.apply(all);
-				Files.write(indexMd, rq, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-			} catch (IOException e) {
-				throw Failure.CANT_WRITE_EXAMPLE_RQ.tothrow(e);
+			for (var en:converterForAll.entrySet()) {
+				String prqfn = en.getKey()+extension;
+				Path indexMd = inputDirectory.resolve(prqfn);
+				try {
+					List<String> rq = en.getValue().apply(all);
+					Files.write(indexMd, rq, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+				} catch (IOException e) {
+					throw Failure.CANT_WRITE_EXAMPLE_RQ.tothrow(e);
+				}
 			}
 		}
 	}
