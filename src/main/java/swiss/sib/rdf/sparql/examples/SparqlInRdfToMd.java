@@ -2,7 +2,6 @@ package swiss.sib.rdf.sparql.examples;
 
 import static swiss.sib.rdf.sparql.examples.SparqlInRdfToRq.streamOf;
 
-import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,8 +34,6 @@ import org.eclipse.rdf4j.query.algebra.helpers.AbstractQueryModelVisitor;
 import org.eclipse.rdf4j.query.parser.ParsedQuery;
 import org.eclipse.rdf4j.query.parser.QueryParser;
 import org.eclipse.rdf4j.query.parser.sparql.SPARQLParserFactory;
-import org.eclipse.rdf4j.rio.RDFParseException;
-import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.jsoup.Jsoup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -239,16 +236,11 @@ public class SparqlInRdfToMd {
 			Map<IRI, InUse> allInUse) {
 		while (endpoints.hasNext()) {
 			IRI endpoint = endpoints.next();
-			try {
-				var vd = ServiceDescription.retrieveVoidDataFromServiceDescription(endpoint.stringValue());
-				if (!vd.isEmpty()) {
-					allVoid.put(endpoint, vd);
-					allInUse.put(endpoint, new InUse(new HashSet<>(), new HashSet<>()));
-				}
-			} catch (IOException | UnsupportedRDFormatException | RDFParseException e) {
-				// Ignore
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
+			
+			var vd = ServiceDescription.retrieveVoIDDataFromServiceDescription(endpoint.stringValue());
+			if (!vd.isEmpty()) {
+				allVoid.put(endpoint, vd);
+				allInUse.put(endpoint, new InUse(new HashSet<>(), new HashSet<>()));
 			}
 		}
 	}
