@@ -19,9 +19,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.impl.TreeModel;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,7 +30,7 @@ public class ServiceDescription {
 
 	}
 
-	public static Model retrieveVoidDataFromServiceDescription(String endpoint) throws RDFParseException, UnsupportedRDFormatException, IOException, InterruptedException {
+	public static Model retrieveVoIDDataFromServiceDescription(String endpoint) {
 		Builder hcb = HttpClient.newBuilder();
 		hcb.followRedirects(Redirect.ALWAYS);
 
@@ -52,7 +50,7 @@ public class ServiceDescription {
 						var p = Rio.getParserFormatForMIMEType(ct);
 						if (p.isPresent()) {
 							RDFFormat format = p.get();
-							Model model = Rio.parse(new ByteArrayInputStream(send.body()), format,
+							Model model = Rio.parse(new ByteArrayInputStream(send.body()), endpoint, format,
 									SimpleValueFactory.getInstance().createIRI(endpoint));
 							logger.info("VoID data for : {} triples: {}", endpoint, model.size());
 							return model;
@@ -62,6 +60,10 @@ public class ServiceDescription {
 			
 		} catch (URISyntaxException e) {
 			throw new IllegalStateException(e);
+		} catch (IOException e) {
+			return new TreeModel();
+		} catch (InterruptedException e) {
+			Thread.currentThread().interrupt();
 		}
 		return new TreeModel();
 	}

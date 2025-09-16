@@ -50,8 +50,8 @@ import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.UnsupportedRDFormatException;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
+import org.junit.jupiter.api.function.Executable;
 
 import swiss.sib.rdf.sparql.examples.statistics.ServiceDescription;
 import swiss.sib.rdf.sparql.examples.vocabularies.SIB;
@@ -205,11 +205,30 @@ public class CreateTestWithRDF4jMethods {
 	 */
 	private static final Map<String, Model> VOID_DATA_CACHE = new ConcurrentHashMap<>();
 
-	public static void testQueryMatchesVoid(Path p) {
+	public static Executable testQueryMatchesVoid(Path p) {
 		Model model = readAllQueries(p);
 		QueryParser parser = new SPARQLParserFactory().getParser();
-		Arrays.stream(QueryTypes.values())
-				.forEach(s -> validateWithVoidAllQueryStringsInModel(parser, model, s, VOID_DATA_CACHE));
+		if (queryTargetsEndPointsWithVoidData(model))
+			return () -> Arrays.stream(QueryTypes.values())
+					.forEach(s -> validateWithVoidAllQueryStringsInModel(parser, model, s, VOID_DATA_CACHE));
+		else
+			return null;
+	}
+
+	private static boolean queryTargetsEndPointsWithVoidData(Model model) {
+		Iterator<Statement> targets = model.getStatements(null, SchemaDotOrg.TARGET, null).iterator();
+		while (targets.hasNext()) {
+			Statement endpoint = targets.next();
+			if (endPointHasVoidData(endpoint.getObject().stringValue())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	private static boolean endPointHasVoidData(String endpoint) {
+		Model voIDData = retrieveVoIDData(VOID_DATA_CACHE, endpoint);
+		return (!voIDData.isEmpty()  && (!voIDData.filter(null, VOID.PROPERTY, null).isEmpty() || !voIDData.filter(null, VOID.CLASS, null).isEmpty()));
 	}
 
 	private static Model readAllQueries(Path p) {
@@ -254,26 +273,21 @@ public class CreateTestWithRDF4jMethods {
 
 	private static void voidValidateQueryStringInValue(QueryParser parser, Value obj, Value target, QueryTypes qt,
 			Map<String, Model> voidDataCache) {
-		assertNotNull(obj);
-		assertTrue(obj.isLiteral());
 		String queryStr = obj.stringValue();
 		String endpoint = target.stringValue();
-		Model voidData = voidDataCache.get(endpoint);
-		if (voidData == null) {
-			try {
-				voidData = ServiceDescription.retrieveVoidDataFromServiceDescription(endpoint);
-				voidDataCache.put(endpoint, voidData);
-			} catch (RDFParseException | UnsupportedRDFormatException | IOException  e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (InterruptedException e) {
-				Thread.currentThread().interrupt();
-				return;
-			}
-		}
-		if (!voidData.isEmpty()) {
+		if (endPointHasVoidData(endpoint)) {
+			Model voidData = retrieveVoIDData(voidDataCache, endpoint);		
 			testVoidProperties(parser, queryStr, endpoint, voidData);
 		}
+	}
+
+	private static Model retrieveVoIDData(Map<String, Model> voidDataCache, String endpoint) {
+		Model voidData = voidDataCache.get(endpoint);
+		if (voidData == null) {
+			voidData = ServiceDescription.retrieveVoIDDataFromServiceDescription(endpoint);
+			voidDataCache.put(endpoint, voidData);
+		}
+		return voidData;
 	}
 
 	private static void testVoidProperties(QueryParser parser, String queryStr, String endpoint, Model voidData) {

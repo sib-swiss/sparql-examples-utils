@@ -14,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -46,8 +47,7 @@ public class ValidateSparqlExamplesTest {
 	@Tag("VoIDTest")
 	@TestFactory
 	public Stream<DynamicTest> testAllWithRDF4jVoID() throws URISyntaxException, IOException {
-		Function<Path, Executable> tester = p -> () -> CreateTestWithRDF4jMethods.testQueryMatchesVoid(p);
-		return testAll(tester);
+		return testAll(CreateTestWithRDF4jMethods::testQueryMatchesVoid);
 	}
 	
 	@TestFactory
@@ -103,7 +103,7 @@ public class ValidateSparqlExamplesTest {
 	}
 
 	private Stream<DynamicTest> testAll(Function<Path, Executable> tester) throws IOException {
-		return FindFiles.sparqlExamples().map(p -> createTest(tester, p.getParent(), p));
+		return FindFiles.sparqlExamples().map(p -> createTest(tester, p.getParent(), p)).filter(Objects::nonNull);
 	}
 
 	private <T> Stream<DynamicTest> testAllAsOne(Function<Path, Stream<T>> tester,
@@ -122,7 +122,11 @@ public class ValidateSparqlExamplesTest {
 	private DynamicTest createTest(Function<Path, Executable> tester, Path projectPath, Path specificExamplePath) {
 		String testName = pathToTestName(specificExamplePath);
 		Executable apply = tester.apply(specificExamplePath);
-		return DynamicTest.dynamicTest(testName, specificExamplePath.toUri(), apply);
+		if (apply != null) {
+			return DynamicTest.dynamicTest(testName, specificExamplePath.toUri(), apply);
+		} else {
+			return null;
+		}
 	}
 
 	private String pathToTestName(Path specificExamplePath) {
