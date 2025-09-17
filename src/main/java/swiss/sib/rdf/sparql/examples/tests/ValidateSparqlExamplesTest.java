@@ -96,24 +96,12 @@ public class ValidateSparqlExamplesTest {
 	}
 
 	private Stream<DynamicTest> testAll(Function<Path, Executable> tester) throws IOException {
-		return Files.list(FindFiles.getBasePath()).filter(Files::isDirectory).flatMap(projectPath -> {
-			try {
-				return FindFiles.sparqlExamples(projectPath).map(p -> createTest(tester, projectPath, p));
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		});
+		return FindFiles.sparqlExamples().map(p -> createTest(tester, p.getParent(), p));
 	}
 
 	private <T> Stream<DynamicTest> testAllAsOne(Function<Path, Stream<T>> tester,
 			Function<Stream<T>, Stream<DynamicTest>> test) throws IOException {
-		return test.apply(Files.list(FindFiles.getBasePath()).flatMap(projectPath -> {
-			try {
-				return FindFiles.sparqlExamples(projectPath).flatMap(tester::apply);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}));
+		return test.apply(FindFiles.sparqlExamples().flatMap(tester::apply));
 	}
 	
 	@TestFactory

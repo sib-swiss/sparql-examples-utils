@@ -92,8 +92,9 @@ public class Tester implements Callable<Integer> {
 		}
 	}
 
-	private int test(Stream<Path> list) throws Exception {
-		System.setProperty(Tester.class.getName(), inputDirectory.toString());
+	private int test(Stream<Path> paths) throws Exception {
+		FindFiles.base = inputDirectory;
+		FindFiles.projects = paths.collect(Collectors.toList());
 		List<String> standardOptions = List.of("--fail-if-no-tests", "--include-engine", "junit-jupiter",
 				"--select-package", ValidateSparqlExamplesTest.class.getPackageName());
 		if (!alsoRunSlowTests) {
