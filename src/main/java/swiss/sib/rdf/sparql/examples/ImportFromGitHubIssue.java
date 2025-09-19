@@ -57,6 +57,9 @@ public class ImportFromGitHubIssue implements Callable<Integer> {
             "--base" }, required = false, description = "The base URI for the examples. e.g. https://purl.example.org/.well-known/sparql-examples/. If not provided, will be extracted from existing .ttl files in the output directory.")
     private String base;
 
+    @Option(names = { "-t", "--tmp-folder" }, required = false, description = "The name of the temporary folder to create for testing. If not provided, no temporary folder will be created.")
+    private String tmpFolder;
+
     @Option(names = { "-h", "--help" }, usageHelp = true, description = "display this help message")
     private boolean usageHelpRequested;
 
@@ -304,20 +307,23 @@ public class ImportFromGitHubIssue implements Callable<Integer> {
         try (OutputStream out = Files.newOutputStream(outputFile, StandardOpenOption.CREATE,
                 StandardOpenOption.TRUNCATE_EXISTING)) {
             Rio.write(model, out, RDFFormat.TURTLE);
+            log.info("Created example query file: {}", outputFile);
         } catch (RDFHandlerException | IOException e) {
             throw new NeedToStopException(e, Failure.CANT_WRITE_FIXED_EXAMPLE);
         }
-        log.info("Created example query file: {}", outputFile);
 
-        // Create a temporary directory and file for testing in github actions
-        Path tmpDir = inputDirectory.resolve("tmp");
-        Files.createDirectories(tmpDir);
-        Path tmpFile = inputDirectory.resolve(queryId + ".ttl");
-        try (OutputStream out = Files.newOutputStream(tmpFile, StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING)) {
-            Rio.write(model, out, RDFFormat.TURTLE);
-        } catch (RDFHandlerException | IOException e) {
-            throw new NeedToStopException(e, Failure.CANT_WRITE_FIXED_EXAMPLE);
+        // Create a temporary directory and file for testing if tmp folder is specified
+        if (tmpFolder != null && !tmpFolder.trim().isEmpty()) {
+            Path tmpDir = inputDirectory.resolve(tmpFolder);
+            Files.createDirectories(tmpDir);
+            Path tmpFile = tmpDir.resolve(queryId + ".ttl");
+            try (OutputStream out = Files.newOutputStream(tmpFile, StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING)) {
+                Rio.write(model, out, RDFFormat.TURTLE);
+                log.info("Created temporary example query file: {}", tmpFile);
+            } catch (RDFHandlerException | IOException e) {
+                throw new NeedToStopException(e, Failure.CANT_WRITE_FIXED_EXAMPLE);
+            }
         }
     }
 }
