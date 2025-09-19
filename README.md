@@ -82,6 +82,13 @@ This can be run with.
 java -jar target/sparql-examples-utils-*-uber.jar test --input-directory=../sparql-examples/examples -p UniProt --also-run-void-check
 ```
 
+### Using Python/RDFlib
+
+The queries can also be tested with the [Python RDFlib](https://rdflib.readthedocs.io/en/stable/) this is done in Java using the [Graal Python](https://www.graalvm.org/python/docs/) implementation. If not running on a Graal/Truffle enabled JVM this is very, very slow. However, it is fully functional. Which is why it is hidden behind a flag `--also-run-python-tests`.
+
+```bash
+java -jar target/sparql-examples-utils-*-uber.jar test --input-directory=../sparql-examples/examples -p MetaNetX --also-run-python-tests
+```
 
 > [!NOTE]
 >
