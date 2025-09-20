@@ -259,7 +259,6 @@ public class ImportFromGitHubIssue implements Callable<Integer> {
                 throw new IllegalArgumentException(
                         "No base namespace provided and no existing .ttl files found to extract namespace from. Please provide the --base parameter.");
             }
-            log.info("Extracted base namespace from existing files: {}", baseNamespace);
         }
         Model model = new TreeModel();
         model.setNamespace("ex", baseNamespace);
@@ -307,7 +306,6 @@ public class ImportFromGitHubIssue implements Callable<Integer> {
         try (OutputStream out = Files.newOutputStream(outputFile, StandardOpenOption.CREATE,
                 StandardOpenOption.TRUNCATE_EXISTING)) {
             Rio.write(model, out, RDFFormat.TURTLE);
-            log.info("Created example query file: {}", outputFile);
         } catch (RDFHandlerException | IOException e) {
             throw new NeedToStopException(e, Failure.CANT_WRITE_FIXED_EXAMPLE);
         }
@@ -320,10 +318,11 @@ public class ImportFromGitHubIssue implements Callable<Integer> {
             try (OutputStream out = Files.newOutputStream(tmpFile, StandardOpenOption.CREATE,
                     StandardOpenOption.TRUNCATE_EXISTING)) {
                 Rio.write(model, out, RDFFormat.TURTLE);
-                log.info("Created temporary example query file: {}", tmpFile);
             } catch (RDFHandlerException | IOException e) {
                 throw new NeedToStopException(e, Failure.CANT_WRITE_FIXED_EXAMPLE);
             }
         }
+        System.out.println("output_file=" + outputFile);
+        System.out.println("query_description=" + description);
     }
 }
