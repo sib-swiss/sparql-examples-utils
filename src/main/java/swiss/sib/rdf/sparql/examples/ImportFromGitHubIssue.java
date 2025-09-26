@@ -94,7 +94,11 @@ public class ImportFromGitHubIssue implements Callable<Integer> {
         }
 
         // Extract information from the issue
-        String sparqlQuery = extractSection(content, "SPARQL query");
+        String sparqlQuery = extractSection(content, "SPARQL query").trim();
+        // Remove surrounding ```sparql ... ``` if present
+        if (sparqlQuery.startsWith("```") && sparqlQuery.endsWith("```")) {
+            sparqlQuery = sparqlQuery.substring(sparqlQuery.indexOf('\n') + 1, sparqlQuery.lastIndexOf("```")).trim();
+        }
         String description = extractSection(content, "Query description");
         String filePath = extractSection(content, "Query file path");
         List<String> targetEndpoints = extractTargetEndpoints(content);
