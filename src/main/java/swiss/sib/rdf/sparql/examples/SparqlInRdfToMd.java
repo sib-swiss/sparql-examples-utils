@@ -184,7 +184,7 @@ public class SparqlInRdfToMd {
 
 				# Statistics for SPARQL variables and constants
 
-				This is distinct constants and variables. Two uses of the same IRI predicate in multiple triple paterns count as one constant.
+				This is distinct constants and variables. Two uses of the same IRI predicate in multiple triple patterns count as one constant.
 				""");
 		rq.add("");
 		rq.add("|  | Count | Avg |");
