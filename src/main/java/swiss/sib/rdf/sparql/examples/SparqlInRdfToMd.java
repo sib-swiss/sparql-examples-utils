@@ -224,10 +224,18 @@ public class SparqlInRdfToMd {
 		while (endpoints.hasNext()) {
 			IRI endpoint = endpoints.next();
 			InUse inUse = allInUse.get(endpoint);
+			if (inUse != null) {
+			    rq.add("| " + endpoint + " | " + inUse.classes().size() + " | " + inUse.predicates().size() + " |");
+			} else {
+				rq.add("| " + endpoint + " | - | - |");
+			}
 			Model sd = allVoid.get(endpoint);
-			rq.add("| " + endpoint + " | " + inUse.classes().size() + " | " + inUse.predicates().size() + " |");
-			rq.add("| void | " + streamOf(sd, null, VOID.CLASS, null).count() + " | "
+			if (sd != null) {
+			    rq.add("| void | " + streamOf(sd, null, VOID.CLASS, null).count() + " | "
 					+ streamOf(sd, null, VOID.PROPERTY, null).count() + " |");
+			} else {
+				rq.add("| void | - | - |");
+			}
 		}
 		return rq;
 	}
