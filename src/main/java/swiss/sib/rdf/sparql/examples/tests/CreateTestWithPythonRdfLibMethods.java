@@ -1,5 +1,6 @@
 package swiss.sib.rdf.sparql.examples.tests;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -10,6 +11,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Iterator;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -77,12 +79,16 @@ public class CreateTestWithPythonRdfLibMethods {
 	private static final String PYTHON = "python";
 	private static final String TEST_SCRIPT = """
              from rdflib.plugins.sparql.parser import parseQuery
+             from rdflib.exceptions import ParserError as ParseError
              def test(query):
                  try:
                      parseQuery(query)
-                     return True
-                 except:
-                     return False
+                     return "OK"
+                 except ParseError as err:
+                     print(err.msg)
+                     return err.msg
+                 except Exception as e:
+                     return str(e)
              test
              """;
 
@@ -96,7 +102,8 @@ public class CreateTestWithPythonRdfLibMethods {
 			return;
 		}
 		@SuppressWarnings("unchecked")
-		Predicate<String> t = context.eval(PYTHON, TEST_SCRIPT).as(Predicate.class);
-		assertTrue(t.test(query));
+		Function<String, String> t = context.eval(PYTHON, TEST_SCRIPT).as(Function.class);
+		String apply = t.apply(query);
+		assertEquals("OK", apply, "Query not valid according to RDFlib: " + query +" Result: " + apply);
 	}
 }
