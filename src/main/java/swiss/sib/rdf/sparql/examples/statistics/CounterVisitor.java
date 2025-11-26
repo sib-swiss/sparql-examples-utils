@@ -51,7 +51,6 @@ import org.eclipse.rdf4j.query.algebra.Label;
 import org.eclipse.rdf4j.query.algebra.Lang;
 import org.eclipse.rdf4j.query.algebra.LangMatches;
 import org.eclipse.rdf4j.query.algebra.LeftJoin;
-import org.eclipse.rdf4j.query.algebra.Like;
 import org.eclipse.rdf4j.query.algebra.ListMemberOperator;
 import org.eclipse.rdf4j.query.algebra.Load;
 import org.eclipse.rdf4j.query.algebra.LocalName;
@@ -384,14 +383,6 @@ public class CounterVisitor extends AbstractQueryModelVisitor<RuntimeException> 
 
 	@Override
 	public void meet(LeftJoin node) throws RuntimeException{
-		add(node.getClass());
-		super.meet(node);
-
-
-	}
-
-	@Override
-	public void meet(Like node) throws RuntimeException{
 		add(node.getClass());
 		super.meet(node);
 
