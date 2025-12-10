@@ -4,7 +4,7 @@ on: [push, pull_request, workflow_call, workflow_dispatch]
 jobs:
 
   check:
-    name: Run SPARQL checks
+    name: Run junit tests
     runs-on: ubuntu-latest
 
     steps:
