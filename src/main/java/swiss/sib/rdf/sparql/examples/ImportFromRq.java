@@ -8,8 +8,10 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.Callable;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -79,7 +81,7 @@ public class ImportFromRq implements Callable<Integer> {
 		return 0;
 	}
 
-	private void findFilesToImport() throws IOException {
+	void findFilesToImport() throws IOException {
 		Map<String, String> prefixes = new TreeMap<>();
 		List<Path> iter = Files.walk(inputDirectory).filter(p -> p.toUri().getPath().endsWith(".rq"))
 				.collect(Collectors.toList());
@@ -164,9 +166,10 @@ public class ImportFromRq implements Callable<Integer> {
 				model.add(VF.createStatement(ex, RDFS.COMMENT, VF.createLiteral(String.join("\n", topComments))));
 			}
 			if (!query.isEmpty()) {
+				Predicate<? super Entry<String, String>> prefixIsAlreadyDeclared = e -> prefixNotInQuery(query, e);
 				String q = Stream
-						.concat(prefixes.entrySet().stream().map(e -> "PREFIX " + e.getKey() + ": " + e.getValue()),
-								query.stream())
+						.concat(prefixes.entrySet().stream().filter(prefixIsAlreadyDeclared)
+								.map(e -> "PREFIX " + e.getKey() + ": " + e.getValue()), query.stream())
 						.collect(Collectors.joining("\n"));
 				model.add(VF.createStatement(ex, predicate, VF.createLiteral(q)));
 			}
@@ -177,6 +180,10 @@ public class ImportFromRq implements Callable<Integer> {
 		} catch (IOException e) {
 			throw Failure.CANT_PARSE_EXAMPLE.tothrow(e);
 		}
+	}
+
+	private boolean prefixNotInQuery(List<String> query, Entry<String, String> e) {
+		return query.stream().noneMatch(l -> l.contains(e.getValue()));
 	}
 
 	public boolean extractPrefixes(Map<String, String> prefixes2, String l) {
@@ -244,5 +251,13 @@ public class ImportFromRq implements Callable<Integer> {
 		} catch (RDFHandlerException | IOException e) {
 			throw new NeedToStopException(e, Failure.CANT_WRITE_FIXED_EXAMPLE);
 		}
+	}
+
+	void setInputDirectory(Path p) {
+		this.inputDirectory = p;
+	}
+
+	void setBase(String string) {
+		this.base = string;
 	}
 }
