@@ -419,7 +419,7 @@
         <configuration>
           <resourceDirectory>GRAALPY-VFS/${project.groupId}/${project.artifactId}</resourceDirectory>
             <packages>
-              <package>rdflib==7.1.0</package>
+              <package>rdflib==7.6.0</package>
             </packages>
           </configuration>
       </plugin>
