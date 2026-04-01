@@ -119,16 +119,41 @@ java -jar target/sparql-examples-utils-*-uber.jar convert -i ../sparql-examples/
 
 ## Conversion from RQ files
 
-If you already have a set of sparql examples in '*.rq' files then one can try to import then with:
+If you already have a set of sparql examples in `*.rq` files then you can generate `*.ttl` files with:
 
 ```bash
-java -jar target/sparql-examples-utils-*-uber.jar import-rq -i ../${DIRECTORY_WITH_EXAMPLES_IN_RQ_FILES} -b ${BASE_IRI} 
+java -jar target/sparql-examples-utils-*-uber.jar import-rq -i ../${DIRECTORY_WITH_EXAMPLES_IN_RQ_FILES} -b ${BASE_IRI}
 ```
 
-This attempts to extract metadata as expressed using the [grlc.io](https://grlc.io) approach.
-Prefixes are collected as map, which might lead to issues if they are not unique in the set.
+You can specify an output folder with:
+
+```bash
+java -jar target/sparql-examples-utils-*-uber.jar import-rq -i ../${DIRECTORY_WITH_EXAMPLES_IN_RQ_FILES} -b ${BASE_IRI} -o ./output
+```
+
+This attempts to extract metadata as expressed using the [grlc.io](https://grlc.io) approach. Prefixes are collected as map, which might lead to issues if they are not unique in the set. Warnings are emitted for duplicated prefixes or namespaces.
 
 The base IRI should be the space where you will store the examples and where they can be dereferenced.
+
+To provide metadata about your query, create a comment starting with `#+` and followed by the field to define:
+
+```SPARQL
+#+ endpoint: https://sparql.uniprot.org/sparql
+#+ summary: Get list of species
+#+ tags:
+#+ - species
+#+ - taxon
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+```
+
+You can also provide multiple endpoints separated by commas if the query targets multiple endpoints:
+
+```SPARQL
+#+ endpoint: https://sparql.uniprot.org/sparql, https://www.bgee.org/sparql/
+#+ summary: Get list of species
+#+ tags: species, taxon
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+```
 
 
 ## Generate markdown file
@@ -199,7 +224,7 @@ If you reuse any part of this work, please cite [the arXiv paper](http://arxiv.o
 
 These utils have a mode to extract queries from wikibase instances.
 
-For example to extract the queries from factgrid into a separate example 
+For example to extract the queries from factgrid into a separate example
 directory.
 
 ```sh
