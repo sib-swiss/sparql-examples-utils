@@ -22,13 +22,13 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<enforce-javaee-provided.fail>true</enforce-javaee-provided.fail>
-		<rdf4j.version>5.2.0</rdf4j.version>
-		<jena.version>5.6.0</jena.version>
+		<rdf4j.version>5.3.1</rdf4j.version>
+		<jena.version>6.0.0</jena.version>
 		<junit.version>5.9.3</junit.version>
 		<project.tests.exclude>SlowTest</project.tests.exclude>
 		<native.maven.plugin.version>0.10.3</native.maven.plugin.version>
 		<picocli.version>4.7.7</picocli.version>
-	        <graalpy.version>25.0.1</graalpy.version>
+	        <graalpy.version>25.0.2</graalpy.version>
         	<graalpy.edition>python-community</graalpy.edition>
 	</properties>
 	<profiles>
