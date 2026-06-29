@@ -58,7 +58,8 @@ public class ValidateSparqlExamplesTest {
 	
 	@TestFactory
 	public Stream<DynamicTest> testAllWithRdflib() throws IOException {
-		Function<Path, Executable> tester = p -> () -> CreateTestWithPythonRdfLibMethods.testQueryValid(p);
+		var pyTester = new CreateTestWithPythonRdfLibMethods();
+		Function<Path, Executable> tester = p -> () -> pyTester.testQueryValid(p);
 		return testAll(tester);
 	}
 

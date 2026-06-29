@@ -27,20 +27,20 @@ import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
-import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Context.Builder;
 import org.graalvm.python.embedding.GraalPyResources;
 import org.graalvm.python.embedding.VirtualFileSystem;
 
 import swiss.sib.rdf.sparql.examples.vocabularies.SIB;
 
-public class CreateTestWithPythonRdfLibMethods {
+public record CreateTestWithPythonRdfLibMethods(Function<String, String> t) {
 
-	private CreateTestWithPythonRdfLibMethods() {
-
+	@SuppressWarnings("unchecked")
+	public CreateTestWithPythonRdfLibMethods() {
+		this(CONTEXT_BUILDER.build().eval(PYTHON, TEST_SCRIPT).as(Function.class));
 	}
 
-	static void testQueryValid(Path p) {
+	void testQueryValid(Path p) {
 		assertTrue(Files.exists(p));
 		RDFParser rdfParser = Rio.createParser(RDFFormat.TURTLE);
 		Model model = new LinkedHashModel();
@@ -51,18 +51,16 @@ public class CreateTestWithPythonRdfLibMethods {
 			fail(e);
 		}
 		assertFalse(model.isEmpty());
-		try (var context = CONTEXT_BUILDER.build()) {
+	
 			Stream.of(SHACL.ASK, SHACL.SELECT, SHACL.CONSTRUCT, SIB.DESCRIBE)
 					.map(s -> model.getStatements(null, s, null)).map(Iterable::iterator)
-					.forEach(i -> testAllQueryStringsInModel(context, i));
-		}
-
+					.forEach(this::testAllQueryStringsInModel);
 	}
 
-	private static void testAllQueryStringsInModel(Context context, Iterator<Statement> i) {
+	private void testAllQueryStringsInModel(Iterator<Statement> i) {
 		while (i.hasNext()) {
 			Statement next = i.next();
-			testQueryStringInValue(context, next);
+			testQueryStringInValue(next);
 		}
 	}
 
@@ -92,8 +90,8 @@ public class CreateTestWithPythonRdfLibMethods {
              test
              """;
 
-
-	static void testQueryStringInValue(Context context, Statement next) {
+	//Not sure the context is thread safe, so synchronize the call to the python function
+	synchronized void testQueryStringInValue(Statement next) {
 		Value obj = next.getObject();
 		assertNotNull(obj);
 		assertTrue(obj.isLiteral());
@@ -101,8 +99,6 @@ public class CreateTestWithPythonRdfLibMethods {
 		if (SERVICE_PATTERN.test(query)) {
 			return;
 		}
-		@SuppressWarnings("unchecked")
-		Function<String, String> t = context.eval(PYTHON, TEST_SCRIPT).as(Function.class);
 		String apply = t.apply(query);
 		assertEquals("OK", apply, "Query not valid according to RDFlib: " + query +" Result: " + apply);
 	}

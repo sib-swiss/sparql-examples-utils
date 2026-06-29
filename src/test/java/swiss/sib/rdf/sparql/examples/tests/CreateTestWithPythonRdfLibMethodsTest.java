@@ -19,7 +19,8 @@ class CreateTestWithPythonRdfLibMethodsTest {
 		Path test = tempDir.resolve("./test.ttl");
 		Files.createFile(test);
 		Files.writeString(test, ExamplesUsedInTest.rhea9);
-		CreateTestWithPythonRdfLibMethods.testQueryValid(test);
+		
+		new CreateTestWithPythonRdfLibMethods().testQueryValid(test);
 	}
 
 }
