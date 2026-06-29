@@ -53,8 +53,8 @@ public class Tester implements Callable<Integer> {
 	@Option(names = { "--also-run-void-check" })
 	private boolean alsoRunVoidCheck;
 
-	@Option(names = { "--also-run-python-tests" })
-	private boolean alsoRunPythonTests;
+	@Option(names = { "--also-run-python-tests" }, defaultValue = "true", description = "Also run the the Python and RDFLib tests. This is the default, but can be disabled.")
+	private boolean alsoRunPythonTests = true;
 	
 	@Option(names = { "--status-markdown" })
 	private File statusMarkdown;
