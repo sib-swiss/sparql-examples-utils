@@ -2,6 +2,8 @@
 
 This is a set of tools to convert, test and help maintain SPARQL query examples.
 
+*Minimum:* Java version is JDK 25
+
 
 The code comes from the [SIB SPARQL Examples](https://github.com/sib-swiss/sparql-examples/) project.
 
