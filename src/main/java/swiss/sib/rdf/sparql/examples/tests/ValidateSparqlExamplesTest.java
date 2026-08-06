@@ -57,6 +57,14 @@ public class ValidateSparqlExamplesTest {
 	}
 	
 	@TestFactory
+	public Stream<DynamicTest> testAllWithComunicaJs() throws IOException {
+		var jsTester = new CreateTestWithJSComunicaMethods();
+		Function<Path, Executable> tester = p -> () -> jsTester.testQueryValid(p);
+		return testAll(tester).onClose(() -> jsTester.close());
+	}
+	
+	
+	@TestFactory
 	public Stream<DynamicTest> testAllWithRdflib() throws IOException {
 		var pyTester = new CreateTestWithPythonRdfLibMethods();
 		Function<Path, Executable> tester = p -> () -> pyTester.testQueryValid(p);
