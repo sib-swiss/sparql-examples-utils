@@ -34,8 +34,31 @@ import org.graalvm.polyglot.io.IOAccess;
 
 import swiss.sib.rdf.sparql.examples.vocabularies.SIB;
 
+/**
+ * Test the SPARQL query for parsing with Traqula which is in JS/TS
+ * The JS code needs to be in /src/main/resouces/
+ * 
+ * Can be updated by 
+ * 
+ * <pre>
+ * {@code npm install @traqula/parser-sparql-1-1}
+ * {@code npx esbuild @traqula/parser-sparql-1-1 --bundle --format=iife --global-name=Traqula --outfile=src/main/resources/traqula-parser.js}
+ * </pre> 
+ */
 public class CreateTestWithJSComunicaMethods implements AutoCloseable {
+	private static final String JS = "js";
 	
+	public static class JSSetupExcpetion extends Exception{
+		private static final long serialVersionUID = 1L;
+
+		public JSSetupExcpetion(String message) {
+			super(message);
+		}
+
+		public JSSetupExcpetion(String string, Exception e) {
+			super(string, e);
+		}
+	}
 	
 	
 	private static final String testJs = """
@@ -50,17 +73,17 @@ public class CreateTestWithJSComunicaMethods implements AutoCloseable {
 			""";
 	private final Context context;
 	final Function<String, Optional<String>> tester;
-	public CreateTestWithJSComunicaMethods() {
-		context = Context.newBuilder(JS).allowIO(IOAccess.ALL).build();
+	public CreateTestWithJSComunicaMethods() throws JSSetupExcpetion {
+		context = Context.newBuilder(JS).allowIO(IOAccess.NONE).option("engine.WarnInterpreterOnly", "false").build();
 		tester = makeFunction(context);
 	}
 
-	static  Function<String, Optional<String>> makeFunction(Context context) {
+	static  Function<String, Optional<String>> makeFunction(Context context) throws JSSetupExcpetion {
 		
 		try (InputStream is = CreateTestWithJSComunicaMethods.class
                 .getResourceAsStream("/traqula-parser.js")){
 			if (is == null) {
-				throw new IllegalStateException("traqula-parser.js missing from resources!");
+				throw new JSSetupExcpetion("traqula-parser.js missing from resources!");
 			}
 			Source source = Source.newBuilder(JS, new InputStreamReader(is, StandardCharsets.UTF_8), "traqula-parser.js") 
                     .build();
@@ -84,7 +107,7 @@ public class CreateTestWithJSComunicaMethods implements AutoCloseable {
             	}
             };
 		} catch (IOException e) {
-			throw new IllegalStateException("traqula-parser.js missing from resources!");
+			throw new JSSetupExcpetion("traqula-parser.js missing from resources!", e);
 		}
 	}
 	void testQueryValid(Path p) {
@@ -111,11 +134,7 @@ public class CreateTestWithJSComunicaMethods implements AutoCloseable {
 		}
 	}
 
-
-	
-	private static final String JS = "js";
-
-	//Not sure the context is thread safe, so synchronize the call to the python function
+	//Not sure the context is thread safe, so synchronise the call to the js function
 	synchronized void testQueryStringInValue(Statement next) {
 		Value obj = next.getObject();
 		assertNotNull(obj);

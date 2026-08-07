@@ -129,7 +129,8 @@ public class Converter implements Callable<Integer>{
 
 	private void convertPerSingle(String extension, Function<Model, List<String>> converter, Function<Model, List<String>> converterPerProject, Map<String, Function<Model, List<String>>> converterForAll) throws NeedToStopException{
 		if ("all".equals(projects)) {
-			try (Stream<Path> subInputDirs = Files.list(inputDirectory).filter(Files::isDirectory)) {
+			try (Stream<Path> list = Files.list(inputDirectory);
+					Stream<Path> subInputDirs = list.filter(Files::isDirectory)) {
 				convertProjectsPerSingle(subInputDirs, extension, converter, converterPerProject);
 			} catch (IOException e) {
 				throw new NeedToStopException(e, Failure.CANT_READ_INPUT_DIRECTORY);
@@ -212,7 +213,8 @@ public class Converter implements Callable<Integer>{
 		String prqfn = "index."+extension;
 		Path indexMd = pro.resolve(prqfn);
 		try {
-			try (Stream<Path> subs = Files.list(pro).filter(Files::isDirectory).filter(d -> {
+			try (Stream<Path> list = Files.list(pro);
+				Stream<Path> subs = list.filter(Files::isDirectory).filter(d -> {
 				try {
 					return FindFiles.sparqlExamples(d).findAny().isPresent();
 				} catch (IOException e) {

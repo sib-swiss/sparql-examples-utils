@@ -1,8 +1,8 @@
 package swiss.sib.rdf.sparql.examples.tests;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import swiss.sib.rdf.sparql.examples.ExamplesUsedInTest;
+import swiss.sib.rdf.sparql.examples.tests.CreateTestWithJSComunicaMethods.JSSetupExcpetion;
 
 class CreateTestWithJsComunicaMethodsTest {
 	@TempDir
@@ -27,6 +28,8 @@ class CreateTestWithJsComunicaMethodsTest {
 		
 		try (CreateTestWithJSComunicaMethods jst = new CreateTestWithJSComunicaMethods()){
 			jst.testQueryValid(test);
+		} catch (JSSetupExcpetion e) {
+			fail(e);
 		}
 	}
 	
@@ -38,6 +41,8 @@ class CreateTestWithJsComunicaMethodsTest {
 			Optional<String> apply = jst.tester.apply("SELECT ?s {?S ?p");
 			assertTrue(apply.isPresent());
 			assertNotNull(apply.get(), apply.get());
+		} catch (JSSetupExcpetion e) {
+			fail(e);
 		}
 	}
 

@@ -41,7 +41,8 @@ public class SparqlInRdfToMermaid {
 	}
 
 	/**
-	 * {@see https://mermaid.js.org}
+	 * Generate a mermaid diagram based on the AST of the SPARQL query.
+	 * {@see <a href="https://mermaid.js.org">Mermaid a diagraming language</a>}
 	 *
 	 * @param ex the model containing all prefixes and query
 	 * @return a a mermaid string

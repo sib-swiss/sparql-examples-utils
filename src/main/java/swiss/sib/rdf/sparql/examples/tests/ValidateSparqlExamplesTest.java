@@ -29,6 +29,7 @@ import org.junit.jupiter.api.TestFactory;
 import org.junit.jupiter.api.function.Executable;
 
 import swiss.sib.rdf.sparql.examples.FindFiles;
+import swiss.sib.rdf.sparql.examples.tests.CreateTestWithJSComunicaMethods.JSSetupExcpetion;
 
 public class ValidateSparqlExamplesTest {
 
@@ -58,9 +59,13 @@ public class ValidateSparqlExamplesTest {
 	
 	@TestFactory
 	public Stream<DynamicTest> testAllWithComunicaJs() throws IOException {
-		var jsTester = new CreateTestWithJSComunicaMethods();
-		Function<Path, Executable> tester = p -> () -> jsTester.testQueryValid(p);
-		return testAll(tester).onClose(() -> jsTester.close());
+		try {
+			var jsTester = new CreateTestWithJSComunicaMethods();
+			Function<Path, Executable> tester = p -> () -> jsTester.testQueryValid(p);
+			return testAll(tester).onClose(() -> jsTester.close());
+		} catch (JSSetupExcpetion e) {
+			return Stream.generate(() -> fail(e));
+		}
 	}
 	
 	
@@ -68,7 +73,7 @@ public class ValidateSparqlExamplesTest {
 	public Stream<DynamicTest> testAllWithRdflib() throws IOException {
 		var pyTester = new CreateTestWithPythonRdfLibMethods();
 		Function<Path, Executable> tester = p -> () -> pyTester.testQueryValid(p);
-		return testAll(tester);
+		return testAll(tester).onClose(()->pyTester.close());
 	}
 
 	@Tag("SlowTest")
