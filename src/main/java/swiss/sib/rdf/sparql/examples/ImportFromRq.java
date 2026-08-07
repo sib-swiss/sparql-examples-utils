@@ -17,6 +17,7 @@ import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import org.eclipse.rdf4j.model.BNode;
@@ -132,48 +133,50 @@ public class ImportFromRq implements Callable<Integer> {
 		prefixConflictTracker.clear();
 		Map<String, String> prefixes = new TreeMap<>();
 		Map<Path, String> endpointCache = new HashMap<>();
-		List<Path> iter = Files.walk(inputDirectory).filter(p -> p.toUri().getPath().endsWith(".rq"))
-				.collect(Collectors.toList());
-		iter.sort((a, b) -> a.toUri().compareTo(b.toUri()));
-		// First pass: collect all prefixes so extractServices has the complete set.
-		for (Path p : iter) {
-			try {
-				Files.readAllLines(p).forEach(line -> extractPrefixes(prefixes, line.trim(), p));
-			} catch (IOException e) {
-				log.warn("Could not pre-scan prefixes in {} ({})", p, e.getMessage());
+		try(Stream<Path> list = Files.walk(inputDirectory)){
+			List<Path> iter = list.filter(p -> p.toUri().getPath().endsWith(".rq"))
+					.collect(Collectors.toList());
+			iter.sort((a, b) -> a.toUri().compareTo(b.toUri()));
+			// First pass: collect all prefixes so extractServices has the complete set.
+			for (Path p : iter) {
+				try {
+					Files.readAllLines(p).forEach(line -> extractPrefixes(prefixes, line.trim(), p));
+				} catch (IOException e) {
+					log.warn("Could not pre-scan prefixes in {} ({})", p, e.getMessage());
+				}
 			}
-		}
-		int index = 1;
-		for (Path p : iter) {
-			importFile(p, prefixes, index++, endpointCache);
-		}
-		log.info("Found prefixes: {}", prefixes.size());
-		if (!prefixConflictTracker.isEmpty()) {
-			prefixConflictTracker.logAll(log);
-		}
-
-		Model prefixModel = new TreeModel();
-		prefixModel.setNamespace(SHACL.NS);
-		prefixModel.setNamespace(XSD.NS);
-		prefixModel.setNamespace(OWL.NS);
-		prefixModel.setNamespace(RDF.NS);
-		prefixes.entrySet().stream().forEach(e -> {
-			BNode pb = VF.createBNode("prefix_" + e.getKey());
-			prefixModel.add(VF.createStatement(PREFIXES_BNODE, SHACL.DECLARE, pb));
-			prefixModel.add(VF.createStatement(pb, SHACL.PREFIX_PROP, VF.createLiteral(e.getKey())));
-			prefixModel.add(VF.createStatement(pb, SHACL.NAMESPACE_PROP, VF.createLiteral(e.getValue(), XSD.ANYURI)));
-		});
-		prefixModel.add(VF.createStatement(PREFIXES_BNODE, RDF.TYPE, OWL.ONTOLOGY));
-		prefixModel.add(VF.createStatement(PREFIXES_BNODE, OWL.IMPORTS, VF.createIRI(SHACL.NAMESPACE)));
-		if (outputDirectory != null) {
-			try {
-				Files.createDirectories(outputDirectory);
-			} catch (IOException e) {
-				throw Failure.CANT_WRITE_EXAMPLE_RQ.tothrow(e);
+			int index = 1;
+			for (Path p : iter) {
+				importFile(p, prefixes, index++, endpointCache);
 			}
-			writeModel(outputDirectory.resolve("prefixes.ttl"), prefixModel);
-		} else {
-			writeModel(inputDirectory.resolve("prefixes.ttl"), prefixModel);
+			log.info("Found prefixes: {}", prefixes.size());
+			if (!prefixConflictTracker.isEmpty()) {
+				prefixConflictTracker.logAll(log);
+			}
+	
+			Model prefixModel = new TreeModel();
+			prefixModel.setNamespace(SHACL.NS);
+			prefixModel.setNamespace(XSD.NS);
+			prefixModel.setNamespace(OWL.NS);
+			prefixModel.setNamespace(RDF.NS);
+			prefixes.entrySet().stream().forEach(e -> {
+				BNode pb = VF.createBNode("prefix_" + e.getKey());
+				prefixModel.add(VF.createStatement(PREFIXES_BNODE, SHACL.DECLARE, pb));
+				prefixModel.add(VF.createStatement(pb, SHACL.PREFIX_PROP, VF.createLiteral(e.getKey())));
+				prefixModel.add(VF.createStatement(pb, SHACL.NAMESPACE_PROP, VF.createLiteral(e.getValue(), XSD.ANYURI)));
+			});
+			prefixModel.add(VF.createStatement(PREFIXES_BNODE, RDF.TYPE, OWL.ONTOLOGY));
+			prefixModel.add(VF.createStatement(PREFIXES_BNODE, OWL.IMPORTS, VF.createIRI(SHACL.NAMESPACE)));
+			if (outputDirectory != null) {
+				try {
+					Files.createDirectories(outputDirectory);
+				} catch (IOException e) {
+					throw Failure.CANT_WRITE_EXAMPLE_RQ.tothrow(e);
+				}
+				writeModel(outputDirectory.resolve("prefixes.ttl"), prefixModel);
+			} else {
+				writeModel(inputDirectory.resolve("prefixes.ttl"), prefixModel);
+			}
 		}
 	}
 

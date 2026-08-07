@@ -200,7 +200,7 @@ public class Blazegraph {
 			replaceIncludes(sqb.getGraphPattern(), bOp, blazeGraphIncludeExample);
 			yield sqb;
 		}
-		case GraphPatternGroup jgn -> {
+		case GraphPatternGroup<?> jgn -> {
 			var nq = new JoinGroupNode(jgn);
 			nq.getChildren().clear();
 			for (Object iGroupMemberNode : jgn.getChildren()) {

@@ -12,6 +12,7 @@ import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
@@ -221,27 +222,28 @@ public class ImportFromGitHubIssue implements Callable<Integer> {
             return null;
         }
         // Find all .ttl files in the directory, excluding prefixes.ttl
-        List<Path> ttlFiles = Files.list(outputDirectory)
-                .filter(path -> path.toString().endsWith(".ttl"))
-                .filter(path -> !path.getFileName().toString().equals("prefixes.ttl"))
-                .collect(Collectors.toList());
-        if (ttlFiles.isEmpty()) {
-            return null;
-        }
-        // Read the first .ttl file and extract the ex: prefix namespace
-        Path firstTtlFile = ttlFiles.get(0);
-        List<String> lines = Files.readAllLines(firstTtlFile);
-        for (String line : lines) {
-            line = line.trim();
-            if (line.startsWith("@prefix ex:")) {
-                // Extract the namespace between < and >
-                int startIndex = line.indexOf('<');
-                int endIndex = line.indexOf('>', startIndex);
-                if (startIndex != -1 && endIndex != -1) {
-                    return line.substring(startIndex + 1, endIndex);
-                }
-            }
-        }
+		try (Stream<Path> list = Files.list(outputDirectory)) {
+			List<Path> ttlFiles = list.filter(path -> path.toString().endsWith(".ttl"))
+					.filter(path -> !path.getFileName().toString().equals("prefixes.ttl")).collect(Collectors.toList());
+
+			if (ttlFiles.isEmpty()) {
+				return null;
+			}
+			// Read the first .ttl file and extract the ex: prefix namespace
+			Path firstTtlFile = ttlFiles.get(0);
+			List<String> lines = Files.readAllLines(firstTtlFile);
+			for (String line : lines) {
+				line = line.trim();
+				if (line.startsWith("@prefix ex:")) {
+					// Extract the namespace between < and >
+					int startIndex = line.indexOf('<');
+					int endIndex = line.indexOf('>', startIndex);
+					if (startIndex != -1 && endIndex != -1) {
+						return line.substring(startIndex + 1, endIndex);
+					}
+				}
+			}
+		}
         return null;
     }
 

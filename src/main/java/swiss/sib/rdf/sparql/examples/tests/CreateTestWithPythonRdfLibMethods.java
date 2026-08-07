@@ -27,17 +27,21 @@ import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
+import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Context.Builder;
 import org.graalvm.python.embedding.GraalPyResources;
 import org.graalvm.python.embedding.VirtualFileSystem;
 
 import swiss.sib.rdf.sparql.examples.vocabularies.SIB;
 
-public record CreateTestWithPythonRdfLibMethods(Function<String, String> t) {
+public record CreateTestWithPythonRdfLibMethods(Context c, Function<String, String> t) implements AutoCloseable {
 
-	@SuppressWarnings("unchecked")
+	private CreateTestWithPythonRdfLibMethods(Context c) {
+		this(c, c.eval(PYTHON, TEST_SCRIPT).as(Function.class));
+	}
+
 	public CreateTestWithPythonRdfLibMethods() {
-		this(CONTEXT_BUILDER.build().eval(PYTHON, TEST_SCRIPT).as(Function.class));
+		this(CONTEXT_BUILDER.build());
 	}
 
 	void testQueryValid(Path p) {
@@ -68,7 +72,7 @@ public record CreateTestWithPythonRdfLibMethods(Function<String, String> t) {
 	private static final VirtualFileSystem VFS = VirtualFileSystem.newBuilder()
 			.resourceDirectory("GRAALPY-VFS/swiss.sib.rdf/sparql-examples-utils").build();
 
-	static final Builder CONTEXT_BUILDER = GraalPyResources.contextBuilder(VFS)
+	static final Builder CONTEXT_BUILDER = Context.newBuilder().apply(GraalPyResources.forVirtualFileSystem(VFS))
 			.option("engine.WarnInterpreterOnly", "false")
 			.allowAllAccess(true);
 	private static final Predicate<String> SERVICE_PATTERN = Pattern.compile("service", Pattern.CASE_INSENSITIVE)
@@ -101,5 +105,10 @@ public record CreateTestWithPythonRdfLibMethods(Function<String, String> t) {
 		}
 		String apply = t.apply(query);
 		assertEquals("OK", apply, "Query not valid according to RDFlib: " + query +" Result: " + apply);
+	}
+
+	@Override
+	public void close() {
+		c.close();
 	}
 }

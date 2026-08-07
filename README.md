@@ -254,3 +254,15 @@ mvn release:prepare
 mvn release:perform
 ```
 
+# Updating the JS|TS Traqula SPARQL parser
+
+This is a SPARQL parser used by Comunica. We build a single function that we can easily access via Graal.js to use this in our tests.
+
+```
+mkdir tmp
+cd tmp
+npm install @traqula/parser-sparql-1-1
+npx esbuild @traqula/parser-sparql-1-1 --bundle --format=iife --global-name=Traqula --outfile=../src/main/resources/traqula-parser.js
+cd ../tmp
+rm -rf tmp
+```

@@ -69,17 +69,17 @@ public final class Render extends AbstractQueryModelVisitor<RuntimeException> {
 
 	private final class FindNodesUsedInFilterOrBind extends AbstractQueryModelVisitor<RuntimeException> {
 		private final String parentId;
-		private final String prefix;
+		private final String nodePrefix;
 
 		private FindNodesUsedInFilterOrBind(String parentId, String prefix) {
 			this.parentId = parentId;
-			this.prefix = prefix;
+			this.nodePrefix = prefix;
 		}
 
 		@Override
 		public void meet(Exists node) throws RuntimeException {
 			int id = existCount++;
-			String existId = prefix + "e" + id;
+			String existId = nodePrefix + "e" + id;
 			rq.add(indent() + "subgraph " + parentId + existId + "[\"Exists Clause\"]");
 			indent += 2;
 			Map<Value, String> constantKeys = new HashMap<>();
