@@ -33,6 +33,7 @@
 		<graalpy.version>25.2.4</graalpy.version>
 		<graal.edition>python-community</graal.edition>
 		<graaljs.version>25.2.4</graaljs.version>
+		<graalwasm.version>25.2.4</graalwasm.version>
 	</properties>
 	<profiles>
 		<profile>
@@ -111,6 +112,12 @@
 		<dependency>
 		    <groupId>org.graalvm.polyglot</groupId>
 		    <artifactId>js</artifactId>
+		    <version>${graaljs.version}</version>
+		    <type>pom</type>
+		</dependency>
+		<dependency>
+		    <groupId>org.graalvm.polyglot</groupId>
+		    <artifactId>wasm</artifactId>
 		    <version>${graaljs.version}</version>
 		    <type>pom</type>
 		</dependency>
