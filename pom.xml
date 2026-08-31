@@ -17,7 +17,7 @@
 		<url>https://www.sib.swiss/</url>
 	</organization>
 	<properties>
-		<java.version>21</java.version>
+		<java.version>25</java.version>
 		<maven.compiler.release>${java.version}</maven.compiler.release>
 		<maven.compiler.source>${java.version}</maven.compiler.source>
 		<maven.compiler.target>${java.version}</maven.compiler.target>
@@ -30,10 +30,10 @@
 		<project.tests.exclude>SlowTest</project.tests.exclude>
 		<native.maven.plugin.version>0.10.3</native.maven.plugin.version>
 		<picocli.version>4.7.7</picocli.version>
-		<graalpy.version>25.2.4</graalpy.version>
+		<graalpy.version>25.3.4.1</graalpy.version>
 		<graal.edition>python-community</graal.edition>
-		<graaljs.version>25.2.4</graaljs.version>
-		<graalwasm.version>25.2.4</graalwasm.version>
+		<graaljs.version>25.3.4.1</graaljs.version>
+		<graalwasm.version>25.3.4.1</graalwasm.version>
 	</properties>
 	<profiles>
 		<profile>
