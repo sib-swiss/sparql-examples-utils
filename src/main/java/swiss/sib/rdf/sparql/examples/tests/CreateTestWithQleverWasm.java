@@ -77,6 +77,7 @@ public class CreateTestWithQleverWasm implements AutoCloseable {
 		context = Context.newBuilder(WASM)
 				.allowIO(IOAccess.NONE)
 				.option("engine.WarnInterpreterOnly", "false")
+//				.option("wasm.Builtins", "wasi_snapshot_preview1")
 				.allowExperimentalOptions(true)
 				.option("wasm.UseUnsafeMemory", "true")
 				.option("wasm.Memory64", "true")
@@ -106,7 +107,7 @@ public class CreateTestWithQleverWasm implements AutoCloseable {
             	}
             };
 		} catch (IOException e) {
-			throw new WasmSetupException("traqula-parser.js missing from resources!", e);
+			throw new WasmSetupException("qlever.wasm missing from resources!", e);
 		}
 	}
 	void testQueryValid(Path p) {
