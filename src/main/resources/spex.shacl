@@ -32,5 +32,6 @@ PREFIX spex: <https://purl.expasy.org/sparql-examples/ontology#>
         # Ending with a whitespace is probably an typo
 		sh:pattern "^[^\s].*[^\s]$" ] , [
     sh:path spex:federatesWith;
-        sh:minCount 0 ] .
+        sh:minCount 0 ,
+        sh:nodeKind sh:IRI ] .
 
