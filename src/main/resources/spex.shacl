@@ -29,9 +29,9 @@ PREFIX spex: <https://purl.expasy.org/sparql-examples/ontology#>
 		sh:maxCount 0 ] , [
 	sh:path schema:keywords; # Encouraged but not required.
 		sh:minCount 0 ;
-        # Ending with a whitespace is probably an typo
-		sh:pattern "^[^\s].*[^\s]$" ] , [
-    sh:path spex:federatesWith;
-        sh:minCount 0 ,
-        sh:nodeKind sh:IRI ] .
+		# Ending with a whitespace is probably an typo
+		sh:pattern """^[^\\s](.*[^\\s])?$""" ] , [
+	sh:path spex:federatesWith;
+		sh:minCount 0 ;
+		sh:nodeKind sh:IRI ] .
 
