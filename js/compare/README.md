@@ -30,22 +30,30 @@ The exit code is 0 if all went well. The results are in `compare/out`: the diagr
 
 **Triple patterns.** The two versions give different ids to the nodes and draw in a different order, so for each
 edge the labels of the two nodes and of the edge are compared, as a set. This is what has to be the same, and the
-run fails if it is not. The labels are made alike where the JavaScript version is meant to differ: the
-modifiers of a property path, escaped characters, the empty string and language tagged literals (see `triples.js`).
-A query is not compared when Java gives the same id to different variables, which merges them in its own diagram.
+run fails if it is not. Only escaped characters, the empty string and whether the language of a literal is in
+capitals are not compared (see `triples.js`). A query is not compared when Java gives the same id to different
+variables, which merges them in its own diagram. That is a mistake that was fixed, and the number has to be 0.
 
-**Other differences**, in the numbers of OPTIONAL, UNION, MINUS, SERVICE, FILTER, BIND, VALUES and EXISTS in the
-diagram, and in the variables that are green. These are only listed, as most are meant, see the README of the
-project. For the examples of sparql-examples they are 74 queries with a different number of BIND nodes (Java draws
-one for an aggregate in ORDER BY, for the template of CONSTRUCT and for DESCRIBE), 16 with other green variables, 18 with a
-different number of filters, 7 with a different number of UNIONs, and 2 with a different number of EXISTS clauses. The
-differences in the numbers of filters, UNIONs and EXISTS are all one of these three: Java draws everything in an EXISTS
-twice (a filter, a UNION or an EXISTS in it, for example), Java leaves out a FILTER that is directly in an OPTIONAL, and Java
-draws an empty UNION for a path ending in `?`. These were checked against the syntax tree of each query, which predicts them exactly.
-When these numbers change, look at why with `--verbose`.
+**Mermaid.** All the diagrams of both versions have to be valid mermaid. With `--mermaid render` they are also drawn.
 
-**Mermaid.** All the diagrams of the JavaScript version have to be fine for mermaid. Those of the Java version are
-not, for example when an edge of an OPTIONAL has an IRI with a `.` in its label.
+**Other differences**, which are only listed: in the numbers of OPTIONAL, UNION, MINUS, SERVICE, FILTER, BIND, VALUES
+and EXISTS in the diagram, in the variables that are green, and in the text of the filter, bind and values nodes.
+For sparql-examples there are only 16 queries with other text, all of them numbers with a sign, which rdf4j and Traqula
+read differently (`?x +1`, `-?x`), see the README of the project for these and the other known differences.
+`NOT IN` is compared as the same text in both, as rdf4j can only draw it as `!=` and `&&`.
+When there are more, look at why with `--verbose`.
+
+## The cases
+
+`compare/cases` has small examples, one for each of the mistakes that the comparison found in the Java version, and the
+property paths, expressions and aggregates that rdf4j rewrites:
+
+```
+npm run compare -- compare/cases
+```
+
+All of them have to be the same in both versions, with no other differences. It needs no other examples and takes
+less than a minute. Add a case when you find something that goes wrong.
 
 The code that decides what is the same is in `triples.js` and `structure.js`, and is tested without Java or a
 browser by `test/compare.test.js`.

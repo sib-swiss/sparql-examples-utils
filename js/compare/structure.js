@@ -36,6 +36,26 @@ export function highlighted(lines) {
 		.join(',');
 }
 
+const unescape = (text) => text.replace(/#quot;/g, '"').replace(/#lt;/g, '<').replace(/#gt;/g, '>')
+	.replace(/#91;/g, '[').replace(/#93;/g, ']').replace(/#96;/g, '`');
+
+// rdf4j has no NOT IN, it turns ?x NOT IN (a, b) into ?x != a && ?x != b. So both are the same text.
+const NOT_EQUALS = String.raw`(\?\w+) != '[^']*'(?: && \1 != '[^']*')+`;
+const notIn = (text) => text.replace(new RegExp(String.raw`\(${NOT_EQUALS}\)`, 'g'), '$1 not in')
+	.replace(new RegExp(NOT_EQUALS, 'g'), '$1 not in');
+
+/**
+ * The text of the filter, bind and values nodes of a diagram, as a sorted list.
+ * @param {string[]} lines the lines of a diagram, without its first line
+ */
+export function nodeTexts(lines) {
+	return lines
+		.map((line) => /^\s*\S*(?:f\d+\[\["(.*)"\]\]|bind\d+\[\/"(.*)"\/\]|values\d+\[\/"(.*)"\/\])$/.exec(line))
+		.filter(Boolean)
+		.map((match) => notIn(unescape(match[1] ?? match[2] ?? match[3])))
+		.sort();
+}
+
 /** @returns {string[]} the names of the facts that differ */
 export function differences(javaLines, jsLines) {
 	const java = structure(javaLines);
@@ -43,6 +63,9 @@ export function differences(javaLines, jsLines) {
 	const differing = Object.keys(java).filter((fact) => java[fact] !== js[fact]);
 	if (highlighted(javaLines) !== highlighted(jsLines)) {
 		differing.push('highlighted');
+	}
+	if (nodeTexts(javaLines).join('\n') !== nodeTexts(jsLines).join('\n')) {
+		differing.push('texts');
 	}
 	return differing;
 }

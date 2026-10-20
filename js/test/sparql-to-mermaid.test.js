@@ -82,7 +82,7 @@ test('rdf:type is drawn as a, and constants only used as predicates are not node
 
 test('a variable predicate is a node between subject and object', () => {
 	const lines = draw('SELECT * WHERE { ?s ?p ?o }');
-	assert.ok(lines.includes('v1 --> v3 --> v2')); // subject, predicate, object
+	assert.ok(lines.includes('v1 --> v2 --> v3')); // subject, predicate, object
 });
 
 test('a constant used as predicate and as node is drawn between subject and object', () => {
@@ -180,6 +180,8 @@ test('expressions keep their structure', () => {
 	assert.equal(text('!BOUND(?o)'), 'f0[["not bound(?o)"]]');
 	assert.equal(text('?o = 1 || ?o = 2 || ?o = 3'), `f0[["(?o = ${one} || ?o = ${two} || ?o = ${three})"]]`);
 	assert.equal(text('?o NOT IN (1, ?s)'), 'f0[["?o not in"]]');
+	assert.equal(text('?o NOT IN (1)'), `f0[["?o != ${one}"]]`); // one value is a comparison
+	assert.equal(text('?o IN (?s)'), 'f0[["?o = ?s"]]');
 });
 
 test('NOT EXISTS is a subgraph with nodes of its own, drawn once', () => {

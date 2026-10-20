@@ -159,14 +159,27 @@ if (!Object.keys(otherDifferences).length) {
 
 let mermaidFailures = [];
 if (options.mermaid !== 'none') {
-	console.log(`\nChecking the diagrams of the JavaScript version with mermaid (${options.mermaid}) ...`);
-	const diagrams = Object.fromEntries(js.flatMap((result, i) => (result.lines ? [[i, ['graph TD', ...result.lines].join('\n')]] : [])));
+	console.log(`\nChecking the diagrams with mermaid (${options.mermaid}) ...`);
+	const text = (lines) => ['graph TD', ...lines].join('\n');
+	const diagrams = {};
+	queries.forEach((query, i) => {
+		if (query.lines) {
+			diagrams[`java ${i}`] = text(query.lines);
+		}
+		if (js[i].lines) {
+			diagrams[`js ${i}`] = text(js[i].lines);
+		}
+	});
 	const results = await checkWithMermaid(diagrams, options.mermaid);
 	fs.writeFileSync(path.join(options.out, 'mermaid.json'), JSON.stringify(results));
-	mermaidFailures = Object.entries(results).filter(([, problem]) => problem);
-	console.log(`  ${Object.keys(results).length - mermaidFailures.length} of ${Object.keys(results).length} are fine`);
-	for (const [i, problem] of mermaidFailures.slice(0, options.verbose ? Infinity : 5)) {
-		console.log(`  ${describe(queries[i])}: ${problem}`);
+	for (const version of ['java', 'js']) {
+		const mine = Object.entries(results).filter(([id]) => id.startsWith(version + ' '));
+		const failing = mine.filter(([, problem]) => problem);
+		console.log(`  ${version === 'js' ? 'JavaScript' : 'Java'} version: ${mine.length - failing.length} of ${mine.length} are fine`);
+		for (const [id, problem] of failing.slice(0, options.verbose ? Infinity : 5)) {
+			console.log(`    ${describe(queries[Number(id.split(' ')[1])])}: ${problem}`);
+		}
+		mermaidFailures.push(...failing);
 	}
 }
 

@@ -1,0 +1,18 @@
+@prefix ex: <https://example.org/sparql-examples/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sib: <https://purl.expasy.org/sparql-examples/ontology#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# One of the cases that compare.js checks, see ../README.md.
+ex:shared-variables a sh:SPARQLExecutable, sh:SPARQLSelectExecutable ;
+    rdfs:comment "shared-variables"@en ;
+    sh:select """PREFIX ex: <http://example.org/>
+SELECT ?a ?b ?c WHERE {
+  VALUES ?a { ex:x }
+  ?a ex:p ?b .
+  BIND(?b AS ?c)
+  BIND(CONCAT(?a, ?b, ?c) AS ?d)
+  ?d ex:q ?e .
+  BIND(1 AS ?f)
+  ?f ex:r ?g
+}""" .

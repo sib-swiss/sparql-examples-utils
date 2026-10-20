@@ -311,26 +311,43 @@ The diagram looks as in Java: variables, blank nodes and constants are nodes, tr
 the variables that are selected are green, and OPTIONAL, UNION, MINUS and SERVICE are subgraphs. FILTER, BIND and
 VALUES are nodes that are linked to the variables they use.
 
-The Java code walks the algebra of rdf4j, where the JavaScript code walks the syntax tree of Traqula, so there are
-some differences. It was compared with the Java version on the 1317 queries of
-[sparql-examples](https://github.com/sib-swiss/sparql-examples). The triple patterns are drawn as the same edges in
-all of the 1247 queries where the Java diagram is itself correct. In the other 70, Java gives the same id to
-different variables when a query has a BIND or `(expression AS ?variable)`, which merges them in the diagram.
-The JavaScript version differs from Java where rdf4j's rewriting of the query showed:
+The Java code walks the algebra of rdf4j, where the JavaScript code walks the syntax tree of Traqula, and they draw
+the same diagram. They were compared on the 1317 queries of
+[sparql-examples](https://github.com/sib-swiss/sparql-examples) and on the small cases in `js/compare/cases`: they
+draw the same triple patterns and the same number of OPTIONAL, UNION, MINUS, SERVICE, FILTER, BIND, VALUES and EXISTS
+for all of them, and all the diagrams of both versions are valid mermaid 11 that it can draw.
 
-- Every label is quoted and escaped. In Java 93 of the diagrams are not valid mermaid, for example
-  dotted edges of an OPTIONAL with an IRI that has a `.`, language tagged literals (which lost their opening
-  quote), and empty strings. All of the JavaScript diagrams parse and render in mermaid 11.
-- Every edge in an OPTIONAL is dotted, Java only did that for the first.
-- `*`, `+`, `?` and `!` of a property path are in the label of the edge, as in `"rdfs:subClassOf*"`.
-  Java drew an edge without them, or for `?` an empty UNION.
-- The alternatives of a UNION are drawn in the order of the query.
-- EXISTS and NOT EXISTS are drawn once. Java also drew the triple patterns in them in the main diagram. A FILTER
-  in an OPTIONAL is drawn, Java left it out. HAVING is a filter.
-- A variable that is selected but not used in the query is drawn, and the described resource of DESCRIBE.
-  ORDER BY, GROUP BY and the template of CONSTRUCT are not drawn, and neither does anything of rdf4j's internal
-  variables, such as `_anon_having_...` and `_describe_...`, show up.
-- `count(distinct ?x)` shows the `distinct`, and an expression is shown in full, including aggregates in it.
+That comparison found several mistakes in the Java version, which have been fixed:
+
+- Labels were not always quoted and escaped, which made 93 of the 1317 diagrams invalid mermaid. For example an
+  edge of an OPTIONAL with a `.` in the IRI, a language tagged literal that lost its opening quote and its language,
+  an empty string, and a `"` or `<` in a string.
+- Only the first edge in an OPTIONAL was dotted. A FILTER in an OPTIONAL was left out.
+- The triple patterns in an EXISTS were drawn twice, in its subgraph and in the main diagram. NOT EXISTS was drawn as
+  EXISTS.
+- A variable that had been used before a BIND or VALUES gave it, or the next variable, the same node as another
+  variable, which merged them in the diagram (70 of the 1317 queries).
+- The `*`, `+` and `?` of a property path were lost, and a path ending in `?` was drawn as an empty UNION. A negated
+  property set, `!(p|q)`, was drawn as a node with a filter. They are now one edge, with `p*`, `(p/q)+`, `p?` or
+  `!(p|q)` as its label.
+- The alternatives of a UNION were drawn in the opposite order of the query.
+- The text of a FILTER or BIND left out `&&`, `lang`, `datatype`, `coalesce` and `iri`, wrote the XPath name of a
+  function (`lower-case`, `substring`) and had no brackets where `(a + b) * c` needs them.
+- rdf4j's own variables showed up: `_anon_having_...` for HAVING, a node for a COUNT in ORDER BY, and `_describe_...`.
+  An aggregate in an expression, CONCAT(STR(SAMPLE(?x)), "..."), was drawn in pieces. They are now one expression.
+- A VALUES with UNDEF and a SERVICE with a variable had a node with `ERROR: Bad value`, and a variable that is selected
+  but not used was not drawn. Everything in an ASK was green, and a CONSTRUCT did not have the variables of its
+  template green.
+
+What is still different:
+
+- `?x NOT IN (a, b)` is drawn as `?x not in`, with a node for a and b, by JavaScript. rdf4j turns it into
+  `?x != a && ?x != b`, which Java draws, as it can not tell. With one value both draw `?x != a`.
+- rdf4j and Traqula read `?x +1` and `-?x` differently, so Java draws `+ '+1'` and `'-1' * ?x` where JavaScript draws
+  `+ '1'` and `-?x`.
+- A variable that is only in a MINUS is green in Java for `SELECT *`, as rdf4j selects it. It is not in scope, so it is
+  not green in JavaScript.
+- Variables in an EXISTS are never green in Java.
 
 `npm run compare` repeats this comparison, see `js/compare/README.md`.
 

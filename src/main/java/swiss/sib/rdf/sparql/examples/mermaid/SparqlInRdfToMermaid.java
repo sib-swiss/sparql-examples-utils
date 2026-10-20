@@ -95,7 +95,8 @@ public class SparqlInRdfToMermaid {
 		Map<String, String> anonymousKeys = new HashMap<>();
 		Set<Value> usedAsNode = new HashSet<>();
 
-		tq.visit(new NameVariablesAndConstants(constantKeys, variableKeys, anonymousKeys));
+		tq.visit(new NameVariablesAndConstants(constantKeys, variableKeys, anonymousKeys, "",
+				InternalVariables.collect(tq)));
 		tq.visit(new FindWhichConstantsAreNotOnlyUsedAsPredicates(usedAsNode));
 
 		Render visitor = new Render(variableKeys, iriPrefixes, constantKeys, usedAsNode, anonymousKeys, rq, tq);

@@ -34,7 +34,9 @@ export class Renderer {
 	renderQuery(query) {
 		this.markNodes(query.where ? [query.where] : []);
 		for (const variable of query.variables ?? []) {
-			if (variable.subType === 'variable') {
+			if (variable.type === 'wildcard') {
+				inScopeVariables(query.where ? [query.where] : []).forEach((name) => this.scope.variable(name));
+			} else if (variable.subType === 'variable') {
 				this.scope.variable(variable.value); // drawn, even if the query does not use it
 			} else if (variable.subType === 'namedNode') {
 				this.scope.markUsedAsNode(variable); // DESCRIBE <resource>
@@ -201,8 +203,10 @@ export class Renderer {
 		};
 		switch (path.subType) {
 			case '/':
+				// an alternative in a sequence needs brackets, a sequence in an alternative does not
+				return path.items.map((item) => (item.type === 'path' && item.subType === '|' ? `(${this.pathText(item)})` : this.pathText(item))).join('/');
 			case '|':
-				return path.items.map((item) => this.pathText(item)).join(path.subType);
+				return path.items.map((item) => this.pathText(item)).join('|');
 			case '^':
 			case '!':
 				return path.subType + wrap(path.items[0]);
@@ -379,6 +383,11 @@ export function inScopeVariables(patterns, names = new Set()) {
 				break;
 			case 'minus':
 			case 'filter':
+				break;
+			case 'graph':
+			case 'service':
+				add(pattern.name); // GRAPH ?g and SERVICE ?endpoint
+				inScopeVariables(pattern.patterns, names);
 				break;
 			default:
 				if (pattern.type === 'query') {

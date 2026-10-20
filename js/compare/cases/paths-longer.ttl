@@ -1,0 +1,16 @@
+@prefix ex: <https://example.org/sparql-examples/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sib: <https://purl.expasy.org/sparql-examples/ontology#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# One of the cases that compare.js checks, see ../README.md.
+ex:paths-longer a sh:SPARQLExecutable, sh:SPARQLSelectExecutable ;
+    rdfs:comment "paths-longer"@en ;
+    sh:select """PREFIX ex: <http://example.org/>
+SELECT * WHERE {
+  ?a (ex:p/ex:q)* ?b .
+  ?b (ex:r|ex:s)+ ?c .
+  ?c (ex:t/ex:u)? ?d .
+  ?d ex:v/(ex:w|ex:x)* ?e .
+  ?e !(ex:y|ex:z) ?f .
+}""" .

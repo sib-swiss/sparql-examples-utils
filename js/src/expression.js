@@ -88,6 +88,10 @@ export class ExpressionPrinter {
 			case 'in':
 			case 'notin': {
 				const [left, ...members] = args;
+				if (members.length === 1) {
+					// one value is a comparison, which is what rdf4j makes of it too
+					return `${this.print(left)} ${operator === 'in' ? '=' : '!='} ${this.print(members[0])}`;
+				}
 				const text = this.print(left) + (operator === 'in' ? ' in' : ' not in');
 				for (const member of members) {
 					if (member.type === 'term' && member.subType !== 'variable' && member.subType !== 'blankNode') {
