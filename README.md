@@ -312,13 +312,13 @@ the variables that are selected are green, and OPTIONAL, UNION, MINUS and SERVIC
 VALUES are nodes that are linked to the variables they use.
 
 The Java code walks the algebra of rdf4j, where the JavaScript code walks the syntax tree of Traqula, so there are
-some differences. It was compared with the Java version on the 1227 queries of
+some differences. It was compared with the Java version on the 1317 queries of
 [sparql-examples](https://github.com/sib-swiss/sparql-examples). The triple patterns are drawn as the same edges in
-all of the 1161 queries where the Java diagram is itself correct. In the other 66, Java gives the same id to
+all of the 1247 queries where the Java diagram is itself correct. In the other 70, Java gives the same id to
 different variables when a query has a BIND or `(expression AS ?variable)`, which merges them in the diagram.
 The JavaScript version differs from Java where rdf4j's rewriting of the query showed:
 
-- Every label is quoted and escaped. In Java 75 of the diagrams are not valid mermaid, for example
+- Every label is quoted and escaped. In Java 93 of the diagrams are not valid mermaid, for example
   dotted edges of an OPTIONAL with an IRI that has a `.`, language tagged literals (which lost their opening
   quote), and empty strings. All of the JavaScript diagrams parse and render in mermaid 11.
 - Every edge in an OPTIONAL is dotted, Java only did that for the first.

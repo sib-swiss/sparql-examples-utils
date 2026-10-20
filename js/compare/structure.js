@@ -11,10 +11,11 @@ export function structure(lines) {
 	const javaValues = count(/^\S*bind\d+\[\/"?VALUES /);
 	const values = javaValues + count(/^\S*values\d+\[\/"?VALUES /);
 	return {
-		optional: count(/^subgraph optional\d+\[/),
-		union: count(/^subgraph union\d+\[/),
-		minus: count(/^subgraph minus\d*\[/),
-		service: count(/^subgraph s\d+\[/),
+		// by the title or the style of the subgraph, not by its id, which has a prefix inside an EXISTS clause
+		optional: count(/^subgraph \S+\["\(optional\)"\]/),
+		union: count(/^subgraph \S+\[" Union "\]/),
+		minus: count(/^subgraph \S+\["MINUS"\]/),
+		service: count(/^style \S+ stroke-width:4px;$/),
 		filters: count(/^\S*f\d+\[\[/),
 		binds: count(/^\S*bind\d+\[\//) - javaValues,
 		values,

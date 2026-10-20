@@ -85,3 +85,15 @@ test('VALUES is not counted as a bind, whether it is drawn as Java does or as Ja
 	const javaLines = ['  bind0[/VALUES ?a/]', '  bind0-->v1', '  bind1[/"?a"/]', '  v1 --o bind1'];
 	assert.deepEqual([structure(javaLines).binds, structure(javaLines).values], [1, 1]);
 });
+
+test('subgraphs inside an EXISTS clause are counted, although their ids have a prefix', () => {
+	const lines = sparqlToMermaidLines('SELECT * WHERE { ?s <http://e.org/p> ?o FILTER NOT EXISTS { { ?s <http://e.org/a> ?x } UNION { ?s <http://e.org/b> ?x } OPTIONAL { ?x <http://e.org/c> ?y } MINUS { ?x <http://e.org/d> ?z } SERVICE <http://s.org/> { ?x <http://e.org/e> ?w } } }');
+	assert.ok(lines.some((line) => /subgraph f0e1union0\[/.test(line))); // the id has the prefix
+	const facts = structure(lines);
+	assert.deepEqual([facts.union, facts.optional, facts.minus, facts.service, facts.exists], [1, 1, 1, 1, 1]);
+	// as Java draws them, with a different id
+	const java = ['  subgraph unionf0e00[" Union "]', '  subgraph optionalf0e00["(optional)"]', '  subgraph minusf0e01["MINUS"]',
+		'  subgraph s1["http://s.org/"]', '  style s1 stroke-width:4px;'];
+	const javaFacts = structure(java);
+	assert.deepEqual([javaFacts.union, javaFacts.optional, javaFacts.minus, javaFacts.service], [1, 1, 1, 1]);
+});

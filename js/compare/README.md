@@ -10,7 +10,7 @@ npm install
 npm run compare -- ~/git/sparql-examples/examples
 ```
 
-It takes about a minute for the 1227 queries of [sparql-examples](https://github.com/sib-swiss/sparql-examples).
+It takes about a minute for the 1317 queries of [sparql-examples](https://github.com/sib-swiss/sparql-examples).
 Use the directory with the `.ttl` files of the examples, not the directory above it, which also has files with all
 the examples of a project in one file.
 
@@ -36,9 +36,12 @@ A query is not compared when Java gives the same id to different variables, whic
 
 **Other differences**, in the numbers of OPTIONAL, UNION, MINUS, SERVICE, FILTER, BIND, VALUES and EXISTS in the
 diagram, and in the variables that are green. These are only listed, as most are meant, see the README of the
-project. For the examples of sparql-examples they are 71 queries with a different number of BIND nodes (Java draws
-one for an aggregate in ORDER BY, for the template of CONSTRUCT and for DESCRIBE), 17 with other green variables, 14 with a
-different number of filters, 6 UNIONs that Java draws for a path ending in `?`, and 2 queries with an EXISTS inside an EXISTS, which Java draws twice.
+project. For the examples of sparql-examples they are 74 queries with a different number of BIND nodes (Java draws
+one for an aggregate in ORDER BY, for the template of CONSTRUCT and for DESCRIBE), 16 with other green variables, 18 with a
+different number of filters, 7 with a different number of UNIONs, and 2 with a different number of EXISTS clauses. The
+differences in the numbers of filters, UNIONs and EXISTS are all one of these three: Java draws everything in an EXISTS
+twice (a filter, a UNION or an EXISTS in it, for example), Java leaves out a FILTER that is directly in an OPTIONAL, and Java
+draws an empty UNION for a path ending in `?`. These were checked against the syntax tree of each query, which predicts them exactly.
 When these numbers change, look at why with `--verbose`.
 
 **Mermaid.** All the diagrams of the JavaScript version have to be fine for mermaid. Those of the Java version are
