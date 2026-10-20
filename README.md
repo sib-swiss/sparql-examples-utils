@@ -254,3 +254,115 @@ mvn release:prepare
 mvn release:perform
 ```
 
+# SPARQL as a mermaid diagram in JavaScript
+
+The `js` directory has a JavaScript version of the mermaid diagrams that `SparqlInRdfToMermaid` makes in Java.
+It uses the [Traqula](https://github.com/comunica/traqula) SPARQL 1.1 parser of Comunica. It runs in Node, with no
+build step and no Java. It uses no Node APIs, and bundles with esbuild in the same way as the parser below
+(`npx esbuild src/index.js --bundle --format=iife --global-name=SparqlToMermaid`), which is what is needed to
+run it in a browser or in Graal.js.
+
+```
+cd js
+npm install
+npm test
+```
+
+```js
+import { sparqlToMermaid } from './src/index.js';
+
+const diagram = sparqlToMermaid(`
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  SELECT ?category ?label WHERE {
+    ?category rdfs:subClassOf* ?parent .
+    OPTIONAL { ?category rdfs:label ?label }
+  }`);
+```
+
+It can also draw the query as SVG itself, without mermaid, laid out with [ELK](https://eclipse.dev/elk/):
+
+```js
+import { sparqlToSvg } from './src/svg-index.js';
+
+const svg = await sparqlToSvg(query, { prefixes });
+```
+
+ELK lays out the boxes of OPTIONAL, UNION, MINUS, SERVICE and EXISTS properly: a variable is drawn in the innermost box
+that has all its edges, so a variable that is also used outside an OPTIONAL is drawn outside it, where mermaid draws
+it in the first box that mentions it. A UNION of more than two is one box, and a VALUES or IN with many values shows the
+first 6 (option `maxValues`). The options of `sparqlToSvg` are those of `sparqlToMermaid`, and `measure` (the width of
+text, the default is an estimate for Helvetica and Arial, in a browser pass `measureWithCanvas(DEFAULT_THEME.fontFamily)`),
+`theme` (colours and fonts, see `src/theme.js`), `layoutOptions` (of ELK, e.g. `{ 'elk.direction': 'RIGHT' }`),
+`maxValues`, `idPrefix` and `title`. `sparqlToElk` gives the input of the ELK layout, to draw it in another way, and
+`sparqlToGraph` (in `src/index.js`) the diagram as a tree of nodes, edges and groups, that both are made from.
+`npm run build:demo` bundles it for a browser (1.7 MB, 0.5 MB gzipped, mostly ELK); `demo/index.html` then draws
+a query as you type it.
+
+`sparqlToMermaid(query, options)` gives the text of the diagram, and `sparqlToMermaidLines` the same without its
+first line `graph TD`, to put several queries in one diagram. The options are `prefixes`, a `{ prefix: namespace }`
+object or `Map` that is used to shorten IRIs (the default is the `PREFIX` declarations of the query, and `rdf`, `rdfs`,
+`owl`, `xsd` and `fn`; where namespaces overlap the longest that matches is used, so `cv:DO-00100` rather than
+`:terminology/DO-00100`, in the Java version as well), and `base`
+for relative IRIs, which are resolved with the `URL` of the platform and are drawn as written where there is none.
+A query that is not valid SPARQL 1.1 throws. The queries have to declare their prefixes, except `rdf`, `rdfs`, `owl`,
+`xsd` and `fn`, as with the Java version, whose parser allows those.
+
+The diagram looks as in Java: variables, blank nodes and constants are nodes, triple patterns are labelled edges,
+the variables that are selected are green, and OPTIONAL, UNION, MINUS and SERVICE are subgraphs. FILTER, BIND and
+VALUES are nodes that are linked to the variables they use.
+
+The Java code walks the algebra of rdf4j, where the JavaScript code walks the syntax tree of Traqula, and they draw
+the same diagram. They were compared on the 1317 queries of
+[sparql-examples](https://github.com/sib-swiss/sparql-examples) and on the small cases in `js/compare/cases`: they
+draw the same triple patterns and the same number of OPTIONAL, UNION, MINUS, SERVICE, FILTER, BIND, VALUES and EXISTS
+for all of them, and all the diagrams of both versions are valid mermaid 11 that it can draw.
+
+That comparison found several mistakes in the Java version, which have been fixed:
+
+- Labels were not always quoted and escaped, which made 93 of the 1317 diagrams invalid mermaid. For example an
+  edge of an OPTIONAL with a `.` in the IRI, a language tagged literal that lost its opening quote and its language,
+  an empty string, and a `"` or `<` in a string.
+- Only the first edge in an OPTIONAL was dotted. A FILTER in an OPTIONAL was left out.
+- The triple patterns in an EXISTS were drawn twice, in its subgraph and in the main diagram. NOT EXISTS was drawn as
+  EXISTS.
+- A variable that had been used before a BIND or VALUES gave it, or the next variable, the same node as another
+  variable, which merged them in the diagram (70 of the 1317 queries).
+- The `*`, `+` and `?` of a property path were lost, and a path ending in `?` was drawn as an empty UNION. A negated
+  property set, `!(p|q)`, was drawn as a node with a filter. They are now one edge, with `p*`, `(p/q)+`, `p?` or
+  `!(p|q)` as its label.
+- The alternatives of a UNION were drawn in the opposite order of the query.
+- The text of a FILTER or BIND left out `&&`, `lang`, `datatype`, `coalesce` and `iri`, wrote the XPath name of a
+  function (`lower-case`, `substring`) and had no brackets where `(a + b) * c` needs them.
+- rdf4j's own variables showed up: `_anon_having_...` for HAVING, a node for a COUNT in ORDER BY, and `_describe_...`.
+  An aggregate in an expression, CONCAT(STR(SAMPLE(?x)), "..."), was drawn in pieces. They are now one expression.
+- A VALUES with UNDEF and a SERVICE with a variable had a node with `ERROR: Bad value`, and a variable that is selected
+  but not used was not drawn. Everything in an ASK was green, and a CONSTRUCT did not have the variables of its
+  template green.
+
+What is still different:
+
+- `?x NOT IN (a, b)` is drawn as `?x not in`, with a node for a and b, by JavaScript. rdf4j turns it into
+  `?x != a && ?x != b`, which Java draws, as it can not tell. With one value both draw `?x != a`.
+- rdf4j and Traqula read `?x +1` and `-?x` differently, so Java draws `+ '+1'` and `'-1' * ?x` where JavaScript draws
+  `+ '1'` and `-?x`.
+- A variable that is only in a MINUS is green in Java for `SELECT *`, as rdf4j selects it. It is not in scope, so it is
+  not green in JavaScript.
+- Variables in an EXISTS are never green in Java.
+
+`npm run compare` repeats this comparison, see `js/compare/README.md`.
+
+The part of `SparqlInRdfToMermaid` that finds the queries in the RDF of the examples, and their prefixes, is not
+translated. That needs an RDF parser, and `sparqlToMermaid` takes the query and its prefixes directly.
+
+# Updating the JS|TS Traqula SPARQL parser
+
+This is a SPARQL parser used by Comunica. We build a single function that we can easily access via Graal.js to use this in our tests.
+
+```
+mkdir tmp
+cd tmp
+npm install @traqula/parser-sparql-1-1
+npx esbuild @traqula/parser-sparql-1-1 --bundle --format=iife --global-name=Traqula --outfile=../src/main/resources/traqula-parser.js
+cd ../tmp
+rm -rf tmp
+```

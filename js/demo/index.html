@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SPARQL as a diagram</title>
+<style>
+	* { box-sizing: border-box; }
+	body { margin: 0; font: 14px/1.4 system-ui, sans-serif; color: #222; background: #f6f6f4; }
+	header { padding: 12px 16px; border-bottom: 1px solid #ddd; background: #fff; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+	header h1 { font-size: 16px; margin: 0; }
+	header span { color: #666; }
+	main { display: grid; grid-template-columns: minmax(280px, 1fr) 2fr; gap: 12px; padding: 12px 16px; height: calc(100vh - 50px); }
+	@media (max-width: 800px) { main { grid-template-columns: 1fr; height: auto; } }
+	.query { display: flex; flex-direction: column; gap: 8px; min-height: 300px; }
+	textarea { flex: 1; width: 100%; font: 13px/1.45 ui-monospace, monospace; padding: 8px; border: 1px solid #ccc; border-radius: 4px; resize: vertical; min-height: 260px; }
+	.controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+	button, select { font: inherit; padding: 4px 10px; border: 1px solid #bbb; border-radius: 4px; background: #fff; cursor: pointer; }
+	#status { color: #666; }
+	#status.error { color: #b00020; white-space: pre-wrap; font-family: ui-monospace, monospace; font-size: 12px; }
+	.diagram { overflow: auto; background: #fff; border: 1px solid #ddd; border-radius: 4px; padding: 8px; min-height: 300px; }
+</style>
+</head>
+<body>
+<header>
+	<h1>SPARQL as a diagram</h1>
+	<span>parsed with Traqula, laid out with ELK. Build the script first: <code>npm run build:demo</code></span>
+</header>
+<main>
+	<section class="query">
+		<textarea id="query" spellcheck="false" aria-label="SPARQL query">PREFIX up: <http://purl.uniprot.org/core/>
+PREFIX taxon: <http://purl.uniprot.org/taxonomy/>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+
+SELECT ?protein ?name ?organism WHERE {
+  ?protein a up:Protein ;
+           up:organism ?organism ;
+           up:recommendedName/up:fullName ?name .
+  ?organism rdfs:subClassOf* taxon:9606 .
+  OPTIONAL { ?protein up:annotation ?annotation .
+             ?annotation a up:Function_Annotation ; rdfs:comment ?function }
+  { ?protein up:reviewed true } UNION { ?protein up:existence up:Evidence_at_Protein_Level_Existence }
+  FILTER NOT EXISTS { ?protein up:obsolete true }
+  FILTER(CONTAINS(LCASE(?name), "kinase"))
+}</textarea>
+		<div class="controls">
+			<label>Direction
+				<select id="direction">
+					<option value="DOWN">top to bottom</option>
+					<option value="RIGHT">left to right</option>
+				</select>
+			</label>
+			<button id="download" type="button">Download SVG</button>
+			<span id="status" role="status"></span>
+		</div>
+	</section>
+	<section class="diagram" id="diagram" aria-label="diagram of the query"></section>
+</main>
+<script src="sparql-diagram.js"></script>
+<script>
+	const { sparqlToSvg, measureWithCanvas, DEFAULT_THEME } = SparqlDiagram;
+	const measure = measureWithCanvas(DEFAULT_THEME.fontFamily);
+	const query = document.getElementById('query');
+	const direction = document.getElementById('direction');
+	const diagram = document.getElementById('diagram');
+	const status = document.getElementById('status');
+	let current = 0;
+	let svg = '';
+
+	async function draw() {
+		const run = ++current;
+		const started = performance.now();
+		try {
+			const result = await sparqlToSvg(query.value, {
+				measure,
+				layoutOptions: { 'elk.direction': direction.value },
+				title: 'Diagram of the SPARQL query',
+			});
+			if (run !== current) return; // a newer query is being drawn
+			svg = result;
+			diagram.innerHTML = svg;
+			status.className = '';
+			status.textContent = `drawn in ${Math.round(performance.now() - started)} ms`;
+		} catch (error) {
+			if (run !== current) return;
+			status.className = 'error';
+			status.textContent = String(error.message).split('\n').slice(0, 6).join('\n');
+		}
+	}
+
+	let timer;
+	query.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(draw, 300); });
+	direction.addEventListener('change', draw);
+	document.getElementById('download').addEventListener('click', () => {
+		const link = document.createElement('a');
+		link.href = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+		link.download = 'query.svg';
+		link.click();
+		setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+	});
+	draw();
+</script>
+</body>
+</html>

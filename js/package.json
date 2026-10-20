@@ -1,0 +1,28 @@
+{
+  "name": "sparql-to-mermaid",
+  "version": "0.1.0",
+  "description": "Draws a SPARQL query as a mermaid diagram, or as SVG laid out with ELK, using the Traqula SPARQL parser of Comunica. A JavaScript port of the mermaid code in sparql-examples-utils.",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./svg": "./src/svg-index.js"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test",
+    "compare": "node compare/compare.js",
+    "build:demo": "esbuild src/svg-index.js --bundle --minify --format=iife --global-name=SparqlDiagram --outfile=demo/sparql-diagram.js"
+  },
+  "dependencies": {
+    "@traqula/parser-sparql-1-1": "^1.4.0",
+    "elkjs": "^0.12.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "mermaid": "^11.0.0"
+  }
+}

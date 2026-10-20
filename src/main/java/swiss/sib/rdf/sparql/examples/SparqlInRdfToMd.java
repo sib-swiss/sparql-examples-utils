@@ -270,7 +270,7 @@ public class SparqlInRdfToMd {
 				String query = q.getObject().stringValue();
 
 				ParsedQuery pq = parser.parseQuery(query, obj.stringValue());
-				QueryModelVisitor<RuntimeException> qmv = new AbstractQueryModelVisitor<RuntimeException>() {
+				QueryModelVisitor<RuntimeException> qmv = new AbstractQueryModelVisitor<>() {
 
 					@Override
 					public void meet(Service node) throws RuntimeException {

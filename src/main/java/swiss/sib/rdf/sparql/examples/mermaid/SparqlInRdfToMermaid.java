@@ -41,7 +41,8 @@ public class SparqlInRdfToMermaid {
 	}
 
 	/**
-	 * {@see https://mermaid.js.org}
+	 * Generate a mermaid diagram based on the AST of the SPARQL query.
+	 * {@see <a href="https://mermaid.js.org">Mermaid a diagraming language</a>}
 	 *
 	 * @param ex the model containing all prefixes and query
 	 * @return a a mermaid string
@@ -69,8 +70,11 @@ public class SparqlInRdfToMermaid {
 
 		Iterator<Statement> iterator = streamOf(ex, null, SHACL.PREFIX_PROP, null).iterator();
 		StringBuilder prefixes = new StringBuilder();
+		// Longest namespace first: Render uses the first that matches, and cv:DO-00100 is clearer than
+		// :terminology/DO-00100 when both cv: and : would fit.
 		Map<String, String> iriPrefixes = new TreeMap<>(
-				Comparator.comparing(String::length).thenComparing(String::compareTo));
+				Comparator.comparingInt((String namespace) -> namespace.length()).reversed()
+						.thenComparing(String::compareTo));
 		gatherCompleteQuery(ex, query, iterator, prefixes, iriPrefixes);
 
 		try {
@@ -91,7 +95,8 @@ public class SparqlInRdfToMermaid {
 		Map<String, String> anonymousKeys = new HashMap<>();
 		Set<Value> usedAsNode = new HashSet<>();
 
-		tq.visit(new NameVariablesAndConstants(constantKeys, variableKeys, anonymousKeys));
+		tq.visit(new NameVariablesAndConstants(constantKeys, variableKeys, anonymousKeys, "",
+				InternalVariables.collect(tq)));
 		tq.visit(new FindWhichConstantsAreNotOnlyUsedAsPredicates(usedAsNode));
 
 		Render visitor = new Render(variableKeys, iriPrefixes, constantKeys, usedAsNode, anonymousKeys, rq, tq);

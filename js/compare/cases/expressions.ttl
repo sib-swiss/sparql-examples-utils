@@ -1,0 +1,21 @@
+@prefix ex: <https://example.org/sparql-examples/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sib: <https://purl.expasy.org/sparql-examples/ontology#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# One of the cases that compare.js checks, see ../README.md.
+ex:expressions a sh:SPARQLExecutable, sh:SPARQLSelectExecutable ;
+    rdfs:comment "expressions"@en ;
+    sh:select """PREFIX ex: <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT * WHERE {
+  ?s ex:a ?o .
+  FILTER(?o > 1 && LANG(?o) = "en" && DATATYPE(?o) = xsd:string && COALESCE(?o, ?s) && !BOUND(?s))
+  FILTER(?o IN (1, 2, ex:c) || ?o NOT IN (3, 4))
+  FILTER((?o + 1) * 2 > 3 - (?o - 1) && ?o / 2 < 4)
+  FILTER(!(?o = 1) && !(isIRI(?s) || isBlank(?s)) && isLiteral(?o) && isNumeric(?o))
+  FILTER(sameTerm(?s, ?o) && langMatches(LANG(?o), "en") && REGEX(STR(?o), "^a[b]", "i"))
+  BIND(IF(?o > 1, "big", "small") AS ?size)
+  BIND(CONCAT(STR(?o), "-", STRLEN(?size)) AS ?c)
+  BIND(xsd:integer(?o) AS ?int)
+}""" .

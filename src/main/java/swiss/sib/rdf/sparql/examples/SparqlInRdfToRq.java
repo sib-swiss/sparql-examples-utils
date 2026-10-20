@@ -29,7 +29,8 @@ public class SparqlInRdfToRq {
 	}
 
 	/**
-	 * {@see https://grlc.io/}
+	 * Make RQ files with grlc.io style metadata.
+	 * {@see <a href="https://grlc.io/">grlc.io</a>}
 	 * @param ex the model containing all prefixes and query
 	 * @return a rq formatted list of strings that should be concatenated later.
 	 */

@@ -1,0 +1,14 @@
+@prefix ex: <https://example.org/sparql-examples/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# One of the cases that compare.js checks, see ../README.md.
+ex:literals a sh:SPARQLExecutable, sh:SPARQLSelectExecutable ;
+    rdfs:comment "literals"@en ;
+    sh:select """PREFIX ex: <http://example.org/>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+SELECT * WHERE {
+  ?s ex:a "plain", "", "with \\"quotes\\" and <angle> [brackets] `tick`", "two\\nlines", "chat"@fr, "dog"@en-GB .
+  ?s ex:b 42, 1.5, true, "x"^^ex:custom, "2020-01-01"^^xsd:date, "1"^^xsd:integer .
+  FILTER(CONTAINS(STR(?s), "\\"<>"))
+}""" .

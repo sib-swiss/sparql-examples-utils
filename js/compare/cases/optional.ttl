@@ -1,0 +1,15 @@
+@prefix ex: <https://example.org/sparql-examples/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sib: <https://purl.expasy.org/sparql-examples/ontology#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# One of the cases that compare.js checks, see ../README.md.
+ex:optional a sh:SPARQLExecutable, sh:SPARQLSelectExecutable ;
+    rdfs:comment "optional"@en ;
+    sh:select """PREFIX ex: <http://example.org/>
+SELECT * WHERE {
+  ?s ex:a ?x .
+  OPTIONAL { ?s ex:b ?y . ?y ex:c ?z . FILTER(?z > 1) }
+  OPTIONAL { ?s ex:d ?w . OPTIONAL { ?w ex:e ?v } }
+  OPTIONAL { ?s ?p ?o }
+}""" .

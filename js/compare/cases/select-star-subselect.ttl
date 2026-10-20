@@ -1,0 +1,14 @@
+@prefix ex: <https://example.org/sparql-examples/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sib: <https://purl.expasy.org/sparql-examples/ontology#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# One of the cases that compare.js checks, see ../README.md.
+ex:select-star-subselect a sh:SPARQLExecutable, sh:SPARQLSelectExecutable ;
+    rdfs:comment "select-star-subselect"@en ;
+    sh:select """PREFIX ex: <http://example.org/>
+SELECT * WHERE {
+  { SELECT ?a (MAX(?b) AS ?m) WHERE { ?a ex:x ?b } GROUP BY ?a }
+  ?a ex:y ?m
+  MINUS { ?a ex:z ex:excluded }
+}""" .

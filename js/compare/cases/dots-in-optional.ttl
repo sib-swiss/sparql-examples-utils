@@ -1,0 +1,12 @@
+@prefix ex: <https://example.org/sparql-examples/> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix sib: <https://purl.expasy.org/sparql-examples/ontology#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+# One of the cases that compare.js checks, see ../README.md.
+ex:dots-in-optional a sh:SPARQLExecutable, sh:SPARQLSelectExecutable ;
+    rdfs:comment "dots-in-optional"@en ;
+    sh:select """SELECT * WHERE {
+  ?s <http://example.org/with.dots/p> ?o .
+  OPTIONAL { ?o <http://example.org/with.dots/q> <http://example.org/with.dots/r> }
+}""" .

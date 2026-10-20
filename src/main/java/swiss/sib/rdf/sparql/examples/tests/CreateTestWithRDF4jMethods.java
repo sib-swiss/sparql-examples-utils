@@ -197,15 +197,14 @@ public class CreateTestWithRDF4jMethods {
 		QueryParser parser = new SPARQLParserFactory().getParser();
 		Arrays.stream(QueryTypes.values()).forEach(s -> executeAllQueryStringsInModel(parser, model, s));
 	}
-
+	
+	private static final Map<String, Model> VOID_DATA_CACHE = new ConcurrentHashMap<>();
 	/**
 	 * Generate a test case to make sure the query runs.
 	 * 
 	 * @param p of file containing the query
 	 */
-	private static final Map<String, Model> VOID_DATA_CACHE = new ConcurrentHashMap<>();
-
-	public static Executable testQueryMatchesVoid(Path p) {
+		public static Executable testQueryMatchesVoid(Path p) {
 		Model model = readAllQueries(p);
 		QueryParser parser = new SPARQLParserFactory().getParser();
 		if (queryTargetsEndPointsWithVoidData(model))
