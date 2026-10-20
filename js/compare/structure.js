@@ -1,0 +1,47 @@
+/**
+ * Facts about a diagram, other than its triple patterns, to see where the Java and JavaScript versions differ.
+ * Some differences are meant, see the README: HAVING, EXISTS, ORDER BY, property paths ending in ? and so on.
+ */
+
+/** @param {string[]} lines the lines of a diagram, without its first line */
+export function structure(lines) {
+	const trimmed = lines.map((line) => line.trim());
+	const count = (pattern) => trimmed.filter((line) => pattern.test(line)).length;
+	// the Java version draws VALUES as a bind node, the JavaScript version as a values node
+	const javaValues = count(/^\S*bind\d+\[\/"?VALUES /);
+	const values = javaValues + count(/^\S*values\d+\[\/"?VALUES /);
+	return {
+		optional: count(/^subgraph optional\d+\[/),
+		union: count(/^subgraph union\d+\[/),
+		minus: count(/^subgraph minus\d*\[/),
+		service: count(/^subgraph s\d+\[/),
+		filters: count(/^\S*f\d+\[\[/),
+		binds: count(/^\S*bind\d+\[\//) - javaValues,
+		values,
+		exists: count(/^subgraph \S+\["(Not )?Exists Clause"\]/),
+	};
+}
+
+/**
+ * The names of the variables that are green in the diagram, not counting those in an EXISTS clause,
+ * whose ids contain e<number>v<number>.
+ */
+export function highlighted(lines) {
+	return lines
+		.map((line) => /^\s*(\S+?)\("\??([^"]*)"\):::projected/.exec(line))
+		.filter((match) => match && !/e\d+v\d+$/.test(match[1]))
+		.map((match) => match[2])
+		.sort()
+		.join(',');
+}
+
+/** @returns {string[]} the names of the facts that differ */
+export function differences(javaLines, jsLines) {
+	const java = structure(javaLines);
+	const js = structure(jsLines);
+	const differing = Object.keys(java).filter((fact) => java[fact] !== js[fact]);
+	if (highlighted(javaLines) !== highlighted(jsLines)) {
+		differing.push('highlighted');
+	}
+	return differing;
+}

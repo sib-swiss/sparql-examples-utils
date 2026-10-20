@@ -3,3 +3,6 @@
 /examples/**/*.rq
 /examples/**/*.md
 /_site/
+/js/node_modules/
+/js/compare/out/
+/js/demo/sparql-diagram.js
