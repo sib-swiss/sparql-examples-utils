@@ -274,9 +274,12 @@ test('rdf, rdfs, owl, xsd and fn need no declaration, as in the Java version, an
 		/"http:\/\/other\.org\/label"/);
 });
 
-test('the shortest namespace that matches is used, as in the Java version', () => {
+test('the longest namespace that matches is used, as in the Java version', () => {
 	const query = 'SELECT * WHERE { ?s <http://a.org/b/p> ?o }';
-	assert.match(sparqlToMermaid(query, { prefixes: { long: 'http://a.org/b/', short: 'http://a.org/' } }), /"short:b\/p"/);
+	assert.match(sparqlToMermaid(query, { prefixes: { long: 'http://a.org/b/', short: 'http://a.org/' } }), /"long:p"/);
+	assert.match(sparqlToMermaid(query, { prefixes: { short: 'http://a.org/', long: 'http://a.org/b/' } }), /"long:p"/);
+	assert.match(sparqlToMermaid('SELECT * WHERE { ?s <http://a.org/c/p> ?o }',
+		{ prefixes: { long: 'http://a.org/b/', short: 'http://a.org/' } }), /"short:c\/p"/);
 });
 
 test('relative IRIs are resolved against the base', () => {

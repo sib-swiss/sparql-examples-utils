@@ -301,7 +301,8 @@ a query as you type it.
 `sparqlToMermaid(query, options)` gives the text of the diagram, and `sparqlToMermaidLines` the same without its
 first line `graph TD`, to put several queries in one diagram. The options are `prefixes`, a `{ prefix: namespace }`
 object or `Map` that is used to shorten IRIs (the default is the `PREFIX` declarations of the query, and `rdf`, `rdfs`,
-`owl`, `xsd` and `fn`), and `base`
+`owl`, `xsd` and `fn`; where namespaces overlap the longest that matches is used, so `cv:DO-00100` rather than
+`:terminology/DO-00100`, in the Java version as well), and `base`
 for relative IRIs, which are resolved with the `URL` of the platform and are drawn as written where there is none.
 A query that is not valid SPARQL 1.1 throws. The queries have to declare their prefixes, except `rdf`, `rdfs`, `owl`,
 `xsd` and `fn`, as with the Java version, whose parser allows those.

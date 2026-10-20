@@ -40,13 +40,14 @@ export class Iris {
 			}
 		}
 		const labelled = options.prefixes ? entriesOf(options.prefixes) : [...this.declared];
-		// namespace to 'label:'. The shortest namespace is tried first, as in the Java version.
+		// namespace to 'label:'. The longest namespace is tried first, as in the Java version, so that
+		// cv:DO-00100 is used and not :terminology/DO-00100 when both fit.
 		const byNamespace = new Map();
 		for (const [label, namespace] of labelled) {
 			byNamespace.set(namespace, label.endsWith(':') ? label : label + ':');
 		}
 		this.shorteners = [...byNamespace].sort(
-			([a], [b]) => a.length - b.length || (a < b ? -1 : a > b ? 1 : 0));
+			([a], [b]) => b.length - a.length || (a < b ? -1 : a > b ? 1 : 0));
 	}
 
 	/** @returns {string} the absolute IRI of a `namedNode` term */

@@ -72,6 +72,27 @@ public class SparqlInRdfToMermaidTest {
 			    FILTER( ?ex IN ( ex:left , ex:right ))
 			}''' .""";
 
+	String overlappingPrefixes = """
+	prefix ex: <https://sparql.example.org/.well-known/sparql-examples/>
+	prefix sh: <http://www.w3.org/ns/shacl#>
+	prefix xsd: <http://www.w3.org/2001/XMLSchema#>
+	_:prefixes sh:declare _:short , _:long .
+	_:short sh:prefix "short" ; sh:namespace "http://a.org/"^^xsd:anyURI .
+	_:long sh:prefix "long" ; sh:namespace "http://a.org/b/"^^xsd:anyURI .
+	ex:1
+	    a sh:SPARQLSelectExecutable, sh:SPARQLExecutable ;
+	    sh:prefixes _:prefixes ;
+	    sh:select '''PREFIX short: <http://a.org/>
+	PREFIX long: <http://a.org/b/>
+	SELECT ?s WHERE { ?s long:p <http://a.org/c/q> }''' .""";
+
+	@Test
+	public void longestNamespaceIsUsed() {
+		String res = SparqlInRdfToMermaid.asMermaid(parse(overlappingPrefixes));
+		assertTrue(res.contains("long:p"), res);
+		assertTrue(res.contains("short:c/q"), res);
+	}
+
 	@Test
 	public void filterIn() {
 		Model model = parse(filterIn);

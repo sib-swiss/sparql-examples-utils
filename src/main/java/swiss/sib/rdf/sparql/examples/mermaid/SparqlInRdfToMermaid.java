@@ -70,8 +70,11 @@ public class SparqlInRdfToMermaid {
 
 		Iterator<Statement> iterator = streamOf(ex, null, SHACL.PREFIX_PROP, null).iterator();
 		StringBuilder prefixes = new StringBuilder();
+		// Longest namespace first: Render uses the first that matches, and cv:DO-00100 is clearer than
+		// :terminology/DO-00100 when both cv: and : would fit.
 		Map<String, String> iriPrefixes = new TreeMap<>(
-				Comparator.comparing(String::length).thenComparing(String::compareTo));
+				Comparator.comparingInt((String namespace) -> namespace.length()).reversed()
+						.thenComparing(String::compareTo));
 		gatherCompleteQuery(ex, query, iterator, prefixes, iriPrefixes);
 
 		try {
